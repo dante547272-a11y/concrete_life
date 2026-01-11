@@ -1,0 +1,377 @@
+/* Industrial Theme CSS Variables */
+:root {
+  /* Background colors - Dark theme */
+  --bg-primary: #0a0e14;
+  --bg-secondary: #141a24;
+  --bg-tertiary: #1e2632;
+  
+  /* Status colors */
+  --status-running: #00ff88;
+  --status-stopped: #ff4757;
+  --status-warning: #ffa502;
+  --status-idle: #3498db;
+  
+  /* Equipment colors */
+  --bin-fill: #4a90d9;
+  --bin-empty: #2d3a4a;
+  --pipe-color: #5a6a7a;
+  --valve-open: #00ff88;
+  --valve-closed: #ff4757;
+  
+  /* Text colors */
+  --text-primary: #ffffff;
+  --text-secondary: #8892a0;
+  --text-accent: #00d4ff;
+  
+  /* Border */
+  --border-color: #2d3a4a;
+  --border-glow: rgba(0, 212, 255, 0.3);
+  
+  /* Spacing - responsive */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  
+  /* Font sizes - responsive */
+  --font-size-xs: 10px;
+  --font-size-sm: 12px;
+  --font-size-md: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+  --font-size-3xl: 32px;
+  
+  /* Component sizes - responsive */
+  --sidebar-width: 240px;
+  --sidebar-collapsed-width: 64px;
+  --header-height: 56px;
+  --bin-width: 120px;
+  --bin-height: 160px;
+  --silo-width: 100px;
+  --silo-height: 200px;
+  --mixer-width: 300px;
+  --mixer-height: 150px;
+  --scale-width: 100px;
+  --scale-height: 60px;
+}
+
+/* Desktop HD (1920x1080) optimizations */
+@media screen and (min-width: 1920px) {
+  :root {
+    --spacing-xs: 6px;
+    --spacing-sm: 12px;
+    --spacing-md: 20px;
+    --spacing-lg: 32px;
+    --spacing-xl: 48px;
+    
+    --font-size-xs: 12px;
+    --font-size-sm: 14px;
+    --font-size-md: 16px;
+    --font-size-lg: 18px;
+    --font-size-xl: 24px;
+    --font-size-2xl: 32px;
+    --font-size-3xl: 40px;
+    
+    --sidebar-width: 280px;
+    --header-height: 64px;
+    --bin-width: 160px;
+    --bin-height: 220px;
+    --silo-width: 140px;
+    --silo-height: 280px;
+    --mixer-width: 400px;
+    --mixer-height: 200px;
+    --scale-width: 140px;
+    --scale-height: 80px;
+  }
+}
+
+/* Ultra HD (2560+) optimizations */
+@media screen and (min-width: 2560px) {
+  :root {
+    --spacing-xs: 8px;
+    --spacing-sm: 16px;
+    --spacing-md: 24px;
+    --spacing-lg: 40px;
+    --spacing-xl: 64px;
+    
+    --font-size-xs: 14px;
+    --font-size-sm: 16px;
+    --font-size-md: 18px;
+    --font-size-lg: 22px;
+    --font-size-xl: 28px;
+    --font-size-2xl: 40px;
+    --font-size-3xl: 52px;
+    
+    --sidebar-width: 320px;
+    --header-height: 72px;
+    --bin-width: 200px;
+    --bin-height: 280px;
+    --silo-width: 180px;
+    --silo-height: 360px;
+    --mixer-width: 500px;
+    --mixer-height: 260px;
+    --scale-width: 180px;
+    --scale-height: 100px;
+  }
+}
+
+/* Industrial card style */
+.industrial-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Value display - monospace for readings */
+.value-display {
+  font-family: 'Roboto Mono', monospace;
+  font-size: var(--font-size-xl);
+  color: var(--text-accent);
+  text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+}
+
+/* Large value display for dashboard */
+.value-display-lg {
+  font-family: 'Roboto Mono', monospace;
+  font-size: var(--font-size-2xl);
+  color: var(--text-accent);
+  text-shadow: 0 0 15px rgba(0, 212, 255, 0.6);
+}
+
+/* Status indicators */
+.status-running {
+  color: var(--status-running);
+  text-shadow: 0 0 8px var(--status-running);
+}
+
+.status-stopped {
+  color: var(--status-stopped);
+  text-shadow: 0 0 8px var(--status-stopped);
+}
+
+.status-warning {
+  color: var(--status-warning);
+  text-shadow: 0 0 8px var(--status-warning);
+}
+
+.status-idle {
+  color: var(--status-idle);
+  text-shadow: 0 0 8px var(--status-idle);
+}
+
+/* Alarm animations */
+@keyframes alarm-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.alarm-active {
+  animation: alarm-blink 0.5s infinite;
+}
+
+/* Mixer rotation animation */
+@keyframes mixer-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.mixer-blade.running {
+  animation: mixer-rotate 1s linear infinite;
+}
+
+/* Material flow animation */
+@keyframes material-flow {
+  0% { stroke-dashoffset: 20; }
+  100% { stroke-dashoffset: 0; }
+}
+
+.pipe-flow {
+  stroke-dasharray: 10 10;
+  animation: material-flow 0.5s linear infinite;
+}
+
+/* Glow effects for active elements */
+.glow-effect {
+  box-shadow: 0 0 10px var(--border-glow);
+}
+
+.glow-effect-strong {
+  box-shadow: 0 0 20px var(--border-glow), 0 0 40px rgba(0, 212, 255, 0.2);
+}
+
+
+/* ============================================
+   ANT DESIGN DARK THEME OVERRIDES
+   ============================================ */
+
+/* Global body styles */
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* Table styles */
+.ant-table {
+  background: transparent !important;
+}
+
+.ant-table-thead > tr > th {
+  background: var(--bg-tertiary) !important;
+  color: var(--text-secondary) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+}
+
+.ant-table-tbody > tr > td {
+  background: var(--bg-secondary) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+}
+
+.ant-table-tbody > tr:hover > td {
+  background: var(--bg-tertiary) !important;
+}
+
+.ant-table-cell {
+  color: var(--text-primary) !important;
+}
+
+/* Card styles */
+.ant-card {
+  background: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+}
+
+.ant-card-head {
+  border-bottom-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+.ant-card-head-title {
+  color: var(--text-primary) !important;
+}
+
+/* Input styles */
+.ant-input {
+  background: var(--bg-tertiary) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+.ant-input::placeholder {
+  color: var(--text-secondary) !important;
+}
+
+.ant-input-affix-wrapper {
+  background: var(--bg-tertiary) !important;
+  border-color: var(--border-color) !important;
+}
+
+/* Select styles */
+.ant-select-selector {
+  background: var(--bg-tertiary) !important;
+  border-color: var(--border-color) !important;
+}
+
+.ant-select-selection-placeholder {
+  color: var(--text-secondary) !important;
+}
+
+/* Modal styles */
+.ant-modal-content {
+  background: var(--bg-secondary) !important;
+}
+
+.ant-modal-header {
+  background: var(--bg-secondary) !important;
+  border-bottom-color: var(--border-color) !important;
+}
+
+.ant-modal-title {
+  color: var(--text-primary) !important;
+}
+
+/* Statistic styles */
+.ant-statistic-title {
+  color: var(--text-secondary) !important;
+}
+
+.ant-statistic-content {
+  color: var(--text-primary) !important;
+}
+
+/* Progress bar */
+.ant-progress-text {
+  color: var(--text-primary) !important;
+}
+
+/* Pagination */
+.ant-pagination-item {
+  background: var(--bg-tertiary) !important;
+  border-color: var(--border-color) !important;
+}
+
+.ant-pagination-item a {
+  color: var(--text-primary) !important;
+}
+
+.ant-pagination-item-active {
+  border-color: var(--text-accent) !important;
+}
+
+/* Empty state */
+.ant-empty-description {
+  color: var(--text-secondary) !important;
+}
+
+/* Tabs */
+.ant-tabs-tab {
+  color: var(--text-secondary) !important;
+}
+
+.ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: var(--text-accent) !important;
+}
+
+/* Timeline */
+.ant-timeline-item-content {
+  color: var(--text-primary) !important;
+}
+
+/* Descriptions */
+.ant-descriptions-item-label {
+  color: var(--text-secondary) !important;
+}
+
+.ant-descriptions-item-content {
+  color: var(--text-primary) !important;
+}
+
+/* Badge */
+.ant-badge-count {
+  box-shadow: none !important;
+}
+
+/* Menu in dark mode */
+.ant-menu-dark {
+  background: transparent !important;
+}
+
+.ant-menu-dark .ant-menu-item-selected {
+  background: var(--text-accent) !important;
+}
+
+/* Date picker */
+.ant-picker {
+  background: var(--bg-tertiary) !important;
+  border-color: var(--border-color) !important;
+}
+
+.ant-picker-input > input {
+  color: var(--text-primary) !important;
+}
+
+.ant-picker-suffix {
+  color: var(--text-secondary) !important;
+}
