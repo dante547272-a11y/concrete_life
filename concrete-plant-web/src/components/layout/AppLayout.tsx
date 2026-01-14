@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Layout, Menu, Button, Avatar, Dropdown, Space, Badge } from 'antd';
+import { Layout, Menu, Button, Avatar, Dropdown, Space, Badge, Select } from 'antd';
 import type { MenuProps } from 'antd';
 import {
   DashboardOutlined,
@@ -26,9 +26,12 @@ import {
   ControlOutlined,
   SunOutlined,
   MoonOutlined,
+  ToolOutlined,
+  BankOutlined,
 } from '@ant-design/icons';
 import { useResponsive, useFullscreen } from '../../hooks/useResponsive';
 import { useThemeStore } from '../../stores/themeStore';
+import { useSiteStore } from '../../stores/siteStore';
 
 const { Header, Sider, Content } = Layout;
 
@@ -41,6 +44,11 @@ interface AppLayoutProps {
 }
 
 const menuItems: MenuProps['items'] = [
+  {
+    key: 'sites',
+    icon: <BankOutlined />,
+    label: '站点管理',
+  },
   {
     key: 'dashboard',
     icon: <DashboardOutlined />,
@@ -92,6 +100,16 @@ const menuItems: MenuProps['items'] = [
         key: 'concrete-grades',
         icon: <AuditOutlined />,
         label: '混凝土等级',
+      },
+      {
+        key: 'strategies',
+        icon: <SettingOutlined />,
+        label: '策略管理',
+      },
+      {
+        key: 'equipment',
+        icon: <ToolOutlined />,
+        label: '设备管理',
       },
     ],
   },
@@ -182,6 +200,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   const { isHD, isTablet, isMobile } = useResponsive();
   const { isFullscreen, toggleFullscreen } = useFullscreen();
   const { mode: themeMode, toggleTheme } = useThemeStore();
+  const { currentSiteId, sites, setCurrentSite } = useSiteStore();
 
   // Apply theme to document
   useEffect(() => {
@@ -219,6 +238,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
     'materials': 'material-management',
     'recipes': 'material-management',
     'concrete-grades': 'material-management',
+    'strategies': 'material-management',
+    'equipment': 'material-management',
     'orders': 'order-management',
     'tasks': 'order-management',
     'quality': 'quality-billing',
@@ -341,8 +362,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
             justifyContent: 'space-between',
           }}
         >
-          {/* Left side - collapse button */}
-          <Space>
+          {/* Left side - collapse button and site switcher */}
+          <Space size="middle">
             {!isMobile && !isTablet && (
               <Button
                 type="text"
@@ -354,6 +375,21 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                 }}
               />
             )}
+            
+            {/* Site Switcher */}
+            <Select
+              value={currentSiteId}
+              onChange={setCurrentSite}
+              style={{ width: 160 }}
+              size="middle"
+              suffixIcon={<BankOutlined style={{ color: 'var(--text-secondary)' }} />}
+              options={sites
+                .filter(s => s.status === 'active')
+                .map(s => ({ 
+                  value: s.id, 
+                  label: s.name,
+                }))}
+            />
           </Space>
 
           {/* Right side - actions */}

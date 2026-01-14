@@ -15,7 +15,9 @@ import {
   RollbackOutlined,
   PauseCircleOutlined,
   StopOutlined,
-  ExperimentOutlined
+  ExperimentOutlined,
+  ZoomInOutlined,
+  ZoomOutOutlined
 } from '@ant-design/icons';
 
 // ============ Types ============
@@ -24,6 +26,7 @@ interface CanvasComponent {
   type: string;
   x: number;
   y: number;
+  scale: number; // 缩放比例
   props: Record<string, unknown>;
 }
 
@@ -60,18 +63,18 @@ const componentTemplates: Record<string, ComponentTemplate[]> = {
 
 // ============ Initial Canvas Layout ============
 const initialComponents: CanvasComponent[] = [
-  { id: 'sand1', type: 'aggregate-bin', x: 50, y: 50, props: { name: '砂1', fillLevel: 75, material: 'sand' } },
-  { id: 'rock1', type: 'aggregate-bin', x: 160, y: 50, props: { name: '石1', fillLevel: 60, material: 'rock' } },
-  { id: 'cem1', type: 'cement-silo', x: 300, y: 60, props: { name: '水泥仓1', fillLevel: 85 } },
-  { id: 'cem2', type: 'cement-silo', x: 390, y: 60, props: { name: '水泥仓2', fillLevel: 70 } },
-  { id: 'water1', type: 'tank', x: 550, y: 60, props: { name: '水箱', fillLevel: 80, isWater: true } },
-  { id: 'wrda1', type: 'tank', x: 620, y: 60, props: { name: '减水剂', fillLevel: 65, isWater: false } },
-  { id: 'scale-agg', type: 'scale', x: 80, y: 220, props: { name: '骨料秤', weight: 0, targetWeight: 1400 } },
-  { id: 'scale-cem', type: 'scale', x: 320, y: 220, props: { name: '粉料秤', weight: 0, targetWeight: 280 } },
-  { id: 'scale-water', type: 'scale', x: 560, y: 220, props: { name: '水秤', weight: 0, targetWeight: 175 } },
-  { id: 'belt1', type: 'belt', x: 50, y: 380, props: { running: false } },
-  { id: 'mixer1', type: 'mixer', x: 420, y: 380, props: { running: false } },
-  { id: 'truck1', type: 'truck', x: 380, y: 430, props: { present: true } },
+  { id: 'sand1', type: 'aggregate-bin', x: 50, y: 50, scale: 1, props: { name: '砂1', fillLevel: 75, material: 'sand' } },
+  { id: 'rock1', type: 'aggregate-bin', x: 160, y: 50, scale: 1, props: { name: '石1', fillLevel: 60, material: 'rock' } },
+  { id: 'cem1', type: 'cement-silo', x: 300, y: 60, scale: 1, props: { name: '水泥仓1', fillLevel: 85 } },
+  { id: 'cem2', type: 'cement-silo', x: 390, y: 60, scale: 1, props: { name: '水泥仓2', fillLevel: 70 } },
+  { id: 'water1', type: 'tank', x: 550, y: 60, scale: 1, props: { name: '水箱', fillLevel: 80, isWater: true } },
+  { id: 'wrda1', type: 'tank', x: 620, y: 60, scale: 1, props: { name: '减水剂', fillLevel: 65, isWater: false } },
+  { id: 'scale-agg', type: 'scale', x: 80, y: 220, scale: 1, props: { name: '骨料秤', weight: 0, targetWeight: 1400 } },
+  { id: 'scale-cem', type: 'scale', x: 320, y: 220, scale: 1, props: { name: '粉料秤', weight: 0, targetWeight: 280 } },
+  { id: 'scale-water', type: 'scale', x: 560, y: 220, scale: 1, props: { name: '水秤', weight: 0, targetWeight: 175 } },
+  { id: 'belt1', type: 'belt', x: 50, y: 380, scale: 1, props: { running: false } },
+  { id: 'mixer1', type: 'mixer', x: 420, y: 380, scale: 1, props: { running: false } },
+  { id: 'truck1', type: 'truck', x: 380, y: 430, scale: 1, props: { present: true } },
 ];
 
 // ============ 配方列表数据 ============
@@ -272,6 +275,7 @@ const ProductionControl: React.FC = () => {
       type: draggedTemplate.type,
       x: coords.x - draggedTemplate.width / 2,
       y: coords.y - draggedTemplate.height / 2,
+      scale: 1,
       props: { ...draggedTemplate.defaultProps },
     }]);
     setDraggedTemplate(null);
@@ -292,6 +296,18 @@ const ProductionControl: React.FC = () => {
         message.success('组件已删除');
       },
     });
+  }, [selectedId]);
+
+  // Handle scale change
+  const handleScaleChange = useCallback((delta: number) => {
+    if (!selectedId) return;
+    setComponents(prev => prev.map(c => {
+      if (c.id === selectedId) {
+        const newScale = Math.max(0.5, Math.min(2, c.scale + delta));
+        return { ...c, scale: newScale };
+      }
+      return c;
+    }));
   }, [selectedId]);
 
   // Handle valve click
@@ -326,41 +342,61 @@ const ProductionControl: React.FC = () => {
   const renderComponent = (comp: CanvasComponent) => {
     const isSelected = selectedId === comp.id && isEditMode;
     const selectionStyle = isSelected ? { filter: 'drop-shadow(0 0 4px #1890ff)' } : {};
+    const scale = comp.scale || 1;
+    
+    // 包装组件以支持缩放
+    const wrapWithScale = (content: React.ReactNode) => (
+      <g 
+        key={comp.id}
+        transform={`translate(${comp.x}, ${comp.y}) scale(${scale})`}
+        style={{ ...selectionStyle, cursor: isEditMode ? 'move' : 'default' }}
+        onMouseDown={(e) => handleDragStart(e, comp.id)}
+      >
+        {content}
+        {/* 缩放指示器 - 仅在编辑模式且选中时显示 */}
+        {isSelected && (
+          <text 
+            x="0" 
+            y="-8" 
+            fill="#1890ff" 
+            fontSize="10" 
+            fontWeight="bold"
+          >
+            {Math.round(scale * 100)}%
+          </text>
+        )}
+      </g>
+    );
     
     switch (comp.type) {
       case 'aggregate-bin':
-        return renderAggregateBin(comp, selectionStyle);
+        return wrapWithScale(renderAggregateBinContent(comp));
       case 'cement-silo':
-        return renderCementSilo(comp, selectionStyle);
+        return wrapWithScale(renderCementSiloContent(comp));
       case 'tank':
-        return renderTank(comp, selectionStyle);
+        return wrapWithScale(renderTankContent(comp));
       case 'scale':
-        return renderScale(comp, selectionStyle);
+        return wrapWithScale(renderScaleContent(comp));
       case 'belt':
-        return renderBelt(comp, selectionStyle);
+        return wrapWithScale(renderBeltContent());
       case 'mixer':
-        return renderMixer(comp, selectionStyle);
+        return wrapWithScale(renderMixerContent(comp));
       case 'truck':
-        return renderTruck(comp, selectionStyle);
+        return wrapWithScale(renderTruckContent());
       case 'valve':
-        return renderValve(comp, selectionStyle);
+        return wrapWithScale(renderValveContent(comp));
       case 'pipe-h':
-        return renderPipeH(comp, selectionStyle);
+        return wrapWithScale(renderPipeHContent(comp));
       case 'pipe-v':
-        return renderPipeV(comp, selectionStyle);
+        return wrapWithScale(renderPipeVContent(comp));
       default:
         return null;
     }
   };
 
-  // Aggregate Bin
-  const renderAggregateBin = (comp: CanvasComponent, style: React.CSSProperties) => (
-    <g 
-      key={comp.id} 
-      transform={`translate(${comp.x}, ${comp.y})`}
-      style={{ ...style, cursor: isEditMode ? 'move' : 'default' }}
-      onMouseDown={(e) => handleDragStart(e, comp.id)}
-    >
+  // Aggregate Bin Content
+  const renderAggregateBinContent = (comp: CanvasComponent) => (
+    <>
       <rect x="0" y="0" width="90" height="22" fill="#ff9800" rx="2" />
       <text x="45" y="15" textAnchor="middle" fill="white" fontSize="11" fontWeight="bold">{comp.props.name as string}</text>
       <path d="M0,24 L0,80 L20,110 L70,110 L90,80 L90,24 Z" fill="#546e7a" stroke="#37474f" strokeWidth="2" />
@@ -380,17 +416,12 @@ const ProductionControl: React.FC = () => {
       <g transform="translate(62, 115)" style={{ cursor: 'pointer' }} onClick={() => handleValveClick(`${comp.id}_right`, comp.props.name as string)}>
         <circle cx="8" cy="8" r="6" fill={valveStates[`${comp.id}_right`] ? '#4CAF50' : '#f44336'} stroke="#333" strokeWidth="1" />
       </g>
-    </g>
+    </>
   );
 
-  // Cement Silo
-  const renderCementSilo = (comp: CanvasComponent, style: React.CSSProperties) => (
-    <g 
-      key={comp.id} 
-      transform={`translate(${comp.x}, ${comp.y})`}
-      style={{ ...style, cursor: isEditMode ? 'move' : 'default' }}
-      onMouseDown={(e) => handleDragStart(e, comp.id)}
-    >
+  // Cement Silo Content
+  const renderCementSiloContent = (comp: CanvasComponent) => (
+    <>
       <rect x="0" y="0" width="70" height="18" fill="#607d8b" rx="2" />
       <text x="35" y="13" textAnchor="middle" fill="white" fontSize="10" fontWeight="bold">{comp.props.name as string}</text>
       <rect x="5" y="20" width="60" height="70" fill="#546e7a" stroke="#37474f" strokeWidth="2" rx="3" />
@@ -403,17 +434,12 @@ const ProductionControl: React.FC = () => {
       <g transform="translate(25, 112)" style={{ cursor: 'pointer' }} onClick={() => handleValveClick(comp.id, comp.props.name as string)}>
         <circle cx="8" cy="8" r="6" fill={valveStates[comp.id] ? '#4CAF50' : '#f44336'} stroke="#333" strokeWidth="1" />
       </g>
-    </g>
+    </>
   );
 
-  // Tank
-  const renderTank = (comp: CanvasComponent, style: React.CSSProperties) => (
-    <g 
-      key={comp.id} 
-      transform={`translate(${comp.x}, ${comp.y})`}
-      style={{ ...style, cursor: isEditMode ? 'move' : 'default' }}
-      onMouseDown={(e) => handleDragStart(e, comp.id)}
-    >
+  // Tank Content
+  const renderTankContent = (comp: CanvasComponent) => (
+    <>
       <rect x="0" y="0" width="55" height="16" fill={comp.props.isWater ? '#2196f3' : '#607d8b'} rx="2" />
       <text x="27" y="12" textAnchor="middle" fill="white" fontSize="9" fontWeight="bold">{comp.props.name as string}</text>
       <rect x="5" y="20" width="45" height="60" fill="#546e7a" stroke="#37474f" strokeWidth="2" rx="3" />
@@ -426,19 +452,14 @@ const ProductionControl: React.FC = () => {
       <g transform="translate(17, 96)" style={{ cursor: 'pointer' }} onClick={() => handleValveClick(comp.id, comp.props.name as string)}>
         <circle cx="8" cy="8" r="6" fill={valveStates[comp.id] ? '#4CAF50' : '#f44336'} stroke="#333" strokeWidth="1" />
       </g>
-    </g>
+    </>
   );
 
-  // Scale
-  const renderScale = (comp: CanvasComponent, style: React.CSSProperties) => {
+  // Scale Content
+  const renderScaleContent = (comp: CanvasComponent) => {
     const width = 80;
     return (
-      <g 
-        key={comp.id} 
-        transform={`translate(${comp.x}, ${comp.y})`}
-        style={{ ...style, cursor: isEditMode ? 'move' : 'default' }}
-        onMouseDown={(e) => handleDragStart(e, comp.id)}
-      >
+      <>
         <rect x="0" y="0" width={width} height="16" fill="#607d8b" rx="2" />
         <text x={width/2} y="12" textAnchor="middle" fill="white" fontSize="10" fontWeight="bold">{comp.props.name as string}</text>
         <path d={`M0,18 L${width},18 L${width*0.75},55 L${width*0.25},55 Z`} fill="#78909c" stroke="#546e7a" strokeWidth="2" />
@@ -449,18 +470,13 @@ const ProductionControl: React.FC = () => {
         <g transform={`translate(${width/2 - 8}, 58)`} style={{ cursor: 'pointer' }} onClick={() => handleValveClick(comp.id, comp.props.name as string)}>
           <circle cx="8" cy="8" r="6" fill={valveStates[comp.id] ? '#4CAF50' : '#f44336'} stroke="#333" strokeWidth="1" />
         </g>
-      </g>
+      </>
     );
   };
 
-  // Belt
-  const renderBelt = (comp: CanvasComponent, style: React.CSSProperties) => (
-    <g 
-      key={comp.id} 
-      transform={`translate(${comp.x}, ${comp.y})`}
-      style={{ ...style, cursor: isEditMode ? 'move' : 'default' }}
-      onMouseDown={(e) => handleDragStart(e, comp.id)}
-    >
+  // Belt Content
+  const renderBeltContent = () => (
+    <>
       <rect x="0" y="0" width="240" height="35" fill="#78909c" stroke="#546e7a" strokeWidth="2" rx="5" />
       {Array.from({ length: 24 }).map((_, i) => (
         <rect key={i} x={5 + i * 10} y="2" width="6" height="31" fill="#90a4ae" rx="1" />
@@ -480,34 +496,24 @@ const ProductionControl: React.FC = () => {
       </g>
       <rect x="50" y="75" width="80" height="22" fill={beltRunning ? '#f44336' : '#666'} rx="3" />
       <text x="90" y="90" textAnchor="middle" fill="white" fontSize="12" fontFamily="monospace" fontWeight="bold">{beltTime}</text>
-    </g>
+    </>
   );
 
-  // Mixer
-  const renderMixer = (comp: CanvasComponent, style: React.CSSProperties) => (
-    <g 
-      key={comp.id} 
-      transform={`translate(${comp.x}, ${comp.y})`}
-      style={{ ...style, cursor: isEditMode ? 'move' : 'default' }}
-      onMouseDown={(e) => handleDragStart(e, comp.id)}
-    >
+  // Mixer Content
+  const renderMixerContent = (comp: CanvasComponent) => (
+    <>
       <path d="M0,0 L100,0 L90,50 L10,50 Z" fill="#78909c" stroke="#546e7a" strokeWidth="2" />
       <path d="M35,50 L65,50 L55,80 L45,80 Z" fill="#607d8b" stroke="#546e7a" strokeWidth="2" />
       <rect x="42" y="80" width="16" height="10" fill="#ff9800" />
       <g transform="translate(42, 95)" style={{ cursor: 'pointer' }} onClick={() => handleValveClick(comp.id, '搅拌机')}>
         <circle cx="8" cy="8" r="6" fill={valveStates[comp.id] ? '#4CAF50' : '#f44336'} stroke="#333" strokeWidth="1" />
       </g>
-    </g>
+    </>
   );
 
-  // Truck
-  const renderTruck = (comp: CanvasComponent, style: React.CSSProperties) => (
-    <g 
-      key={comp.id} 
-      transform={`translate(${comp.x}, ${comp.y})`}
-      style={{ ...style, cursor: isEditMode ? 'move' : 'default' }}
-      onMouseDown={(e) => handleDragStart(e, comp.id)}
-    >
+  // Truck Content
+  const renderTruckContent = () => (
+    <>
       <line x1="-10" y1="75" x2="180" y2="75" stroke="#666" strokeWidth="2" />
       <g transform="translate(0, 20)">
         <path d="M0,55 L0,20 L10,10 L35,10 L40,0 L50,0 L50,55 Z" fill="#78909c" stroke="#546e7a" strokeWidth="2" />
@@ -524,44 +530,31 @@ const ProductionControl: React.FC = () => {
       <g transform="translate(25, 75)"><circle cx="0" cy="0" r="14" fill="#37474f" stroke="#263238" strokeWidth="2" /><circle cx="0" cy="0" r="8" fill="#455a64" /></g>
       <g transform="translate(110, 75)"><circle cx="0" cy="0" r="14" fill="#37474f" stroke="#263238" strokeWidth="2" /><circle cx="0" cy="0" r="8" fill="#455a64" /></g>
       <g transform="translate(140, 75)"><circle cx="0" cy="0" r="14" fill="#37474f" stroke="#263238" strokeWidth="2" /><circle cx="0" cy="0" r="8" fill="#455a64" /></g>
-    </g>
+    </>
   );
 
-  // Valve
-  const renderValve = (comp: CanvasComponent, style: React.CSSProperties) => (
-    <g 
-      key={comp.id} 
-      transform={`translate(${comp.x}, ${comp.y})`}
-      style={{ ...style, cursor: isEditMode ? 'move' : 'pointer' }}
-      onMouseDown={(e) => handleDragStart(e, comp.id)}
-      onClick={() => handleValveClick(comp.id, '阀门')}
-    >
-      <circle cx="10" cy="10" r="8" fill={valveStates[comp.id] ? '#4CAF50' : '#f44336'} stroke="#333" strokeWidth="2" />
-    </g>
+  // Valve Content
+  const renderValveContent = (comp: CanvasComponent) => (
+    <circle 
+      cx="10" 
+      cy="10" 
+      r="8" 
+      fill={valveStates[comp.id] ? '#4CAF50' : '#f44336'} 
+      stroke="#333" 
+      strokeWidth="2" 
+      style={{ cursor: isEditMode ? 'move' : 'pointer' }}
+      onClick={() => !isEditMode && handleValveClick(comp.id, '阀门')}
+    />
   );
 
-  // Horizontal Pipe
-  const renderPipeH = (comp: CanvasComponent, style: React.CSSProperties) => (
-    <g 
-      key={comp.id} 
-      transform={`translate(${comp.x}, ${comp.y})`}
-      style={{ ...style, cursor: isEditMode ? 'move' : 'default' }}
-      onMouseDown={(e) => handleDragStart(e, comp.id)}
-    >
-      <line x1="0" y1="5" x2={comp.props.length as number} y2="5" stroke="#546e7a" strokeWidth="3" />
-    </g>
+  // Horizontal Pipe Content
+  const renderPipeHContent = (comp: CanvasComponent) => (
+    <line x1="0" y1="5" x2={comp.props.length as number} y2="5" stroke="#546e7a" strokeWidth="3" />
   );
 
-  // Vertical Pipe
-  const renderPipeV = (comp: CanvasComponent, style: React.CSSProperties) => (
-    <g 
-      key={comp.id} 
-      transform={`translate(${comp.x}, ${comp.y})`}
-      style={{ ...style, cursor: isEditMode ? 'move' : 'default' }}
-      onMouseDown={(e) => handleDragStart(e, comp.id)}
-    >
-      <line x1="5" y1="0" x2="5" y2={comp.props.length as number} stroke="#546e7a" strokeWidth="3" />
-    </g>
+  // Vertical Pipe Content
+  const renderPipeVContent = (comp: CanvasComponent) => (
+    <line x1="5" y1="0" x2="5" y2={comp.props.length as number} stroke="#546e7a" strokeWidth="3" />
   );
 
   // Component Panel Item
@@ -679,15 +672,39 @@ const ProductionControl: React.FC = () => {
               </Tooltip>
               
               {selectedId && (
-                <Button 
-                  size="small"
-                  icon={<DeleteOutlined />}
-                  danger
-                  style={{ height: 40, fontSize: 13 }}
-                  onClick={handleDelete}
-                >
-                  删除
-                </Button>
+                <>
+                  <Tooltip title="放大组件">
+                    <Button 
+                      size="small"
+                      icon={<ZoomInOutlined />}
+                      style={{ height: 40, fontSize: 13 }}
+                      onClick={() => handleScaleChange(0.1)}
+                    >
+                      放大
+                    </Button>
+                  </Tooltip>
+                  
+                  <Tooltip title="缩小组件">
+                    <Button 
+                      size="small"
+                      icon={<ZoomOutOutlined />}
+                      style={{ height: 40, fontSize: 13 }}
+                      onClick={() => handleScaleChange(-0.1)}
+                    >
+                      缩小
+                    </Button>
+                  </Tooltip>
+                  
+                  <Button 
+                    size="small"
+                    icon={<DeleteOutlined />}
+                    danger
+                    style={{ height: 40, fontSize: 13 }}
+                    onClick={handleDelete}
+                  >
+                    删除
+                  </Button>
+                </>
               )}
             </>
           ) : (

@@ -25,6 +25,9 @@ const LazyAlarms = lazy(() => import('./Alarms'));
 const LazyLogs = lazy(() => import('./Logs'));
 const LazyProductionControl = lazy(() => import('./ProductionControl'));
 const LazyEmployees = lazy(() => import('./Employees'));
+const LazyStrategies = lazy(() => import('./Strategies'));
+const LazyEquipment = lazy(() => import('./Equipment'));
+const LazySites = lazy(() => import('./Sites'));
 
 // Loading fallback with AppLayout skeleton - keeps sidebar/header visible during page load
 const LayoutLoadingFallback: React.FC<{ selectedKey: string }> = ({ selectedKey }) => (
@@ -147,5 +150,23 @@ export const ProductionControlPage: React.FC = () => (
 export const EmployeesPage: React.FC = () => (
   <Suspense fallback={<LayoutLoadingFallback selectedKey="employees" />}>
     <LazyEmployees />
+  </Suspense>
+);
+
+export const StrategiesPage: React.FC = () => (
+  <Suspense fallback={<LayoutLoadingFallback selectedKey="strategies" />}>
+    <LazyStrategies />
+  </Suspense>
+);
+
+export const EquipmentPage: React.FC = () => (
+  <Suspense fallback={<LayoutLoadingFallback selectedKey="equipment" />}>
+    <LazyEquipment />
+  </Suspense>
+);
+
+export const SitesPage: React.FC = () => (
+  <Suspense fallback={<LayoutLoadingFallback selectedKey="sites" />}>
+    <LazySites />
   </Suspense>
 );

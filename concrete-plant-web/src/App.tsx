@@ -23,6 +23,9 @@ import {
   LogsPage,
   ProductionControlPage,
   EmployeesPage,
+  StrategiesPage,
+  EquipmentPage,
+  SitesPage,
 } from './pages';
 import { useThemeStore } from './stores/themeStore';
 import './styles/industrial.css';
@@ -71,6 +74,7 @@ function App() {
           {/* Protected routes */}
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/production-control" element={<ProductionControlPage />} />
+          <Route path="/sites" element={<SitesPage />} />
           
           {/* 车辆管理 */}
           <Route path="/vehicles" element={<VehiclesPage />} />
@@ -81,6 +85,8 @@ function App() {
           <Route path="/materials" element={<MaterialsPage />} />
           <Route path="/recipes" element={<RecipesPage />} />
           <Route path="/concrete-grades" element={<ConcreteGradesPage />} />
+          <Route path="/strategies" element={<StrategiesPage />} />
+          <Route path="/equipment" element={<EquipmentPage />} />
           
           {/* 任务/订单管理 */}
           <Route path="/orders" element={<OrdersPage />} />
