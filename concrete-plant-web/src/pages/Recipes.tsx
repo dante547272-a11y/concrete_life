@@ -3,10 +3,12 @@
  */
 
 import React, { useState } from 'react';
-import { Table, Card, Button, Space, Tag, Input, Modal, Descriptions, List } from 'antd';
-import { PlusOutlined, SearchOutlined, EyeOutlined, EditOutlined, CopyOutlined } from '@ant-design/icons';
+import { Table, Card, Button, Space, Tag, Input, Modal, Descriptions, List, message, Dropdown } from 'antd';
+import { PlusOutlined, SearchOutlined, EyeOutlined, EditOutlined, CopyOutlined, DownloadOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
+import type { MenuProps } from 'antd';
 import { AppLayout } from '../components/layout';
+import { exportData } from '../utils/export';
 
 interface RecipeItem {
   material: string;
@@ -124,6 +126,56 @@ const Recipes: React.FC = () => {
   const [detailVisible, setDetailVisible] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
 
+  // 导出功能
+  const handleExport = (format: 'csv' | 'excel' | 'json') => {
+    try {
+      const exportHeaders = {
+        name: '配方名称',
+        concreteGrade: '混凝土等级',
+        slump: '坍落度',
+        version: '版本',
+        status: '状态',
+        createdAt: '创建日期',
+        updatedAt: '更新日期',
+        createdBy: '创建人'
+      };
+
+      const statusMap = {
+        active: '启用',
+        draft: '草稿',
+        archived: '已归档'
+      };
+
+      const exportDataList = filteredData.map(recipe => ({
+        ...recipe,
+        status: statusMap[recipe.status]
+      }));
+
+      exportData(exportDataList, '配方管理', format, exportHeaders);
+      message.success(`导出${format.toUpperCase()}成功`);
+    } catch (error) {
+      message.error('导出失败');
+    }
+  };
+
+  const exportMenuItems: MenuProps['items'] = [
+    {
+      key: 'excel',
+      label: '导出为 Excel',
+      onClick: () => handleExport('excel'),
+    },
+    {
+      key: 'csv',
+      label: '导出为 CSV',
+      onClick: () => handleExport('csv'),
+    },
+    {
+      key: 'json',
+      label: '导出为 JSON',
+      onClick: () => handleExport('json'),
+    },
+  ];
+
   const showDetail = (recipe: Recipe) => {
     setSelectedRecipe(recipe);
     setDetailVisible(true);
@@ -212,6 +264,11 @@ const Recipes: React.FC = () => {
                 onChange={(e) => setSearchText(e.target.value)}
                 style={{ width: 200 }}
               />
+              <Dropdown menu={{ items: exportMenuItems }} placement="bottomRight">
+                <Button icon={<DownloadOutlined />}>
+                  导出数据
+                </Button>
+              </Dropdown>
               <Button type="primary" icon={<PlusOutlined />}>新建配方</Button>
             </Space>
           }

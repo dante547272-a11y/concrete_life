@@ -3,10 +3,11 @@
  */
 
 import React, { useState } from 'react';
-import { Table, Card, Button, Space, Tag, Input, DatePicker, Row, Col, Statistic, Timeline, Modal, Descriptions } from 'antd';
-import { SearchOutlined, CheckCircleOutlined, CloseCircleOutlined, ExclamationCircleOutlined, EyeOutlined } from '@ant-design/icons';
-import type { ColumnsType } from 'antd/es/table';
+import { Table, Card, Button, Space, Tag, Input, DatePicker, Row, Col, Statistic, Timeline, Modal, Descriptions, message, Dropdown } from 'antd';
+import { SearchOutlined, CheckCircleOutlined, CloseCircleOutlined, ExclamationCircleOutlined, EyeOutlined, DownloadOutlined } from '@ant-design/icons';
+import type { ColumnsType, MenuProps } from 'antd/es/table';
 import { AppLayout } from '../components/layout';
+import { exportData } from '../utils/export';
 
 const { RangePicker } = DatePicker;
 
@@ -123,6 +124,64 @@ const Quality: React.FC = () => {
   const [searchText, setSearchText] = useState('');
   const [detailVisible, setDetailVisible] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<QualityRecord | null>(null);
+
+  // 导出功能
+  const handleExport = (format: 'csv' | 'excel' | 'json') => {
+    try {
+      const exportHeaders = {
+        batchNumber: '批次号',
+        taskNumber: '任务号',
+        concreteGrade: '混凝土等级',
+        volume: '方量(m³)',
+        productionTime: '生产时间',
+        slumpTest: '坍落度(mm)',
+        slumpStatus: '坍落度状态',
+        strengthTest: '强度(MPa)',
+        strengthStatus: '强度状态',
+        operator: '操作员',
+        vehiclePlate: '车牌',
+        deliveryAddress: '送货地址'
+      };
+
+      // 转换状态为中文
+      const statusMap = {
+        pass: '合格',
+        fail: '不合格',
+        warning: '警告',
+        pending: '待检'
+      };
+
+      const exportDataList = filteredData.map(record => ({
+        ...record,
+        slumpStatus: statusMap[record.slumpStatus],
+        strengthStatus: statusMap[record.strengthStatus || 'pending'],
+        strengthTest: record.strengthTest || '待检'
+      }));
+
+      exportData(exportDataList, '质量追溯', format, exportHeaders);
+      message.success(`导出${format.toUpperCase()}成功`);
+    } catch (error) {
+      message.error('导出失败');
+    }
+  };
+
+  const exportMenuItems: MenuProps['items'] = [
+    {
+      key: 'excel',
+      label: '导出为 Excel',
+      onClick: () => handleExport('excel'),
+    },
+    {
+      key: 'csv',
+      label: '导出为 CSV',
+      onClick: () => handleExport('csv'),
+    },
+    {
+      key: 'json',
+      label: '导出为 JSON',
+      onClick: () => handleExport('json'),
+    },
+  ];
 
   const showDetail = (record: QualityRecord) => {
     setSelectedRecord(record);
@@ -247,7 +306,11 @@ const Quality: React.FC = () => {
                 style={{ width: 200 }}
               />
               <RangePicker />
-              <Button>导出报告</Button>
+              <Dropdown menu={{ items: exportMenuItems }} placement="bottomRight">
+                <Button icon={<DownloadOutlined />}>
+                  导出数据
+                </Button>
+              </Dropdown>
             </Space>
           }
         >

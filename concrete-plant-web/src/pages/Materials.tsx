@@ -3,10 +3,11 @@
  */
 
 import React, { useState } from 'react';
-import { Table, Card, Button, Space, Tag, Progress, Input, Select, Row, Col, Statistic } from 'antd';
-import { PlusOutlined, SearchOutlined, WarningOutlined, ReloadOutlined } from '@ant-design/icons';
-import type { ColumnsType } from 'antd/es/table';
+import { Table, Card, Button, Space, Tag, Progress, Input, Select, Row, Col, Statistic, message, Dropdown } from 'antd';
+import { PlusOutlined, SearchOutlined, WarningOutlined, ReloadOutlined, DownloadOutlined } from '@ant-design/icons';
+import type { ColumnsType, MenuProps } from 'antd/es/table';
 import { AppLayout } from '../components/layout';
+import { exportData } from '../utils/export';
 
 interface Material {
   id: string;
@@ -62,6 +63,54 @@ const statusLabels: Record<string, string> = {
 const Materials: React.FC = () => {
   const [searchText, setSearchText] = useState('');
   const [typeFilter, setTypeFilter] = useState<string | undefined>();
+
+  // 导出功能
+  const handleExport = (format: 'csv' | 'excel' | 'json') => {
+    try {
+      const exportHeaders = {
+        name: '物料名称',
+        type: '类型',
+        specification: '规格',
+        currentStock: '当前库存',
+        capacity: '容量',
+        unit: '单位',
+        lowThreshold: '低库存阈值',
+        status: '状态',
+        supplier: '供应商',
+        lastUpdate: '最后更新'
+      };
+
+      // 转换数据为中文
+      const exportDataList = filteredData.map(material => ({
+        ...material,
+        type: typeLabels[material.type],
+        status: material.status === 'normal' ? '正常' : material.status === 'low' ? '库存偏低' : '库存不足'
+      }));
+
+      exportData(exportDataList, '原材料库存', format, exportHeaders);
+      message.success(`导出${format.toUpperCase()}成功`);
+    } catch (error) {
+      message.error('导出失败');
+    }
+  };
+
+  const exportMenuItems: MenuProps['items'] = [
+    {
+      key: 'excel',
+      label: '导出为 Excel',
+      onClick: () => handleExport('excel'),
+    },
+    {
+      key: 'csv',
+      label: '导出为 CSV',
+      onClick: () => handleExport('csv'),
+    },
+    {
+      key: 'json',
+      label: '导出为 JSON',
+      onClick: () => handleExport('json'),
+    },
+  ];
 
   const columns: ColumnsType<Material> = [
     {
@@ -205,6 +254,11 @@ const Materials: React.FC = () => {
                 ]}
               />
               <Button icon={<ReloadOutlined />}>刷新</Button>
+              <Dropdown menu={{ items: exportMenuItems }} placement="bottomRight">
+                <Button icon={<DownloadOutlined />}>
+                  导出数据
+                </Button>
+              </Dropdown>
               <Button type="primary" icon={<PlusOutlined />}>入库登记</Button>
             </Space>
           }

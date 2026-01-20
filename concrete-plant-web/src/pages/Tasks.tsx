@@ -2,10 +2,12 @@
  * Tasks Dispatch Page
  */
 
-import React from 'react';
-import { Table, Button, Space, Input, Tag } from 'antd';
-import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
+import React, { useState } from 'react';
+import { Table, Button, Space, Input, Tag, message, Dropdown } from 'antd';
+import { PlusOutlined, SearchOutlined, DownloadOutlined } from '@ant-design/icons';
+import type { MenuProps } from 'antd';
 import { AppLayout } from '../components/layout';
+import { exportData } from '../utils/export';
 
 interface Task {
   id: string;
@@ -41,6 +43,61 @@ const statusLabels = {
 };
 
 const Tasks: React.FC = () => {
+  const [searchText, setSearchText] = useState('');
+
+  // 过滤数据
+  const filteredTasks = mockTasks.filter(task =>
+    task.taskNumber.toLowerCase().includes(searchText.toLowerCase()) ||
+    task.orderNumber.toLowerCase().includes(searchText.toLowerCase()) ||
+    (task.vehiclePlate && task.vehiclePlate.includes(searchText)) ||
+    (task.driverName && task.driverName.includes(searchText))
+  );
+
+  // 导出功能
+  const handleExport = (format: 'csv' | 'excel' | 'json') => {
+    try {
+      const exportHeaders = {
+        taskNumber: '任务号',
+        orderNumber: '订单号',
+        vehiclePlate: '车牌号',
+        driverName: '司机',
+        concreteGrade: '混凝土等级',
+        volume: '方量(m³)',
+        status: '状态'
+      };
+
+      // 转换状态为中文
+      const exportDataList = filteredTasks.map(task => ({
+        ...task,
+        vehiclePlate: task.vehiclePlate || '未分配',
+        driverName: task.driverName || '未分配',
+        status: statusLabels[task.status]
+      }));
+
+      exportData(exportDataList, '任务派单', format, exportHeaders);
+      message.success(`导出${format.toUpperCase()}成功`);
+    } catch (error) {
+      message.error('导出失败');
+    }
+  };
+
+  const exportMenuItems: MenuProps['items'] = [
+    {
+      key: 'excel',
+      label: '导出为 Excel',
+      onClick: () => handleExport('excel'),
+    },
+    {
+      key: 'csv',
+      label: '导出为 CSV',
+      onClick: () => handleExport('csv'),
+    },
+    {
+      key: 'json',
+      label: '导出为 JSON',
+      onClick: () => handleExport('json'),
+    },
+  ];
   const columns = [
     {
       title: '任务号',
@@ -102,21 +159,31 @@ const Tasks: React.FC = () => {
         <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
           <Space>
             <Input
-              placeholder="搜索任务号"
+              placeholder="搜索任务号/订单号/车牌/司机"
               prefix={<SearchOutlined />}
-              style={{ width: 200 }}
+              style={{ width: 250 }}
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              allowClear
             />
           </Space>
-          <Button type="primary" icon={<PlusOutlined />}>
-            新建任务
-          </Button>
+          <Space>
+            <Dropdown menu={{ items: exportMenuItems }} placement="bottomRight">
+              <Button icon={<DownloadOutlined />}>
+                导出数据
+              </Button>
+            </Dropdown>
+            <Button type="primary" icon={<PlusOutlined />}>
+              新建任务
+            </Button>
+          </Space>
         </div>
 
         <Table
           columns={columns}
-          dataSource={mockTasks}
+          dataSource={filteredTasks}
           rowKey="id"
-          pagination={{ pageSize: 10 }}
+          pagination={{ pageSize: 10, showTotal: (total) => `共 ${total} 条` }}
         />
       </div>
     </AppLayout>

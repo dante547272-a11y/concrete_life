@@ -3,10 +3,12 @@
  */
 
 import React, { useState } from 'react';
-import { Table, Card, Button, Space, Tag, Input, Select, Row, Col, Statistic, Badge, Timeline, Modal } from 'antd';
-import { SearchOutlined, CheckOutlined, BellOutlined, WarningOutlined, CloseCircleOutlined, ExclamationCircleOutlined, SoundOutlined } from '@ant-design/icons';
+import { Table, Card, Button, Space, Tag, Input, Select, Row, Col, Statistic, Badge, Timeline, Modal, message, Dropdown } from 'antd';
+import { SearchOutlined, CheckOutlined, BellOutlined, WarningOutlined, CloseCircleOutlined, ExclamationCircleOutlined, SoundOutlined, DownloadOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
+import type { MenuProps } from 'antd';
 import { AppLayout } from '../components/layout';
+import { exportData } from '../utils/export';
 
 interface Alarm {
   id: string;
@@ -55,6 +57,56 @@ const Alarms: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string | undefined>();
   const [detailVisible, setDetailVisible] = useState(false);
   const [selectedAlarm, setSelectedAlarm] = useState<Alarm | null>(null);
+
+  // 导出功能
+  const handleExport = (format: 'csv' | 'excel' | 'json') => {
+    try {
+      const exportHeaders = {
+        timestamp: '时间',
+        type: '级别',
+        source: '来源',
+        message: '告警信息',
+        acknowledged: '已确认',
+        acknowledgedBy: '确认人',
+        acknowledgedAt: '确认时间',
+        resolved: '已解决',
+        resolvedAt: '解决时间'
+      };
+
+      const exportDataList = filteredData.map(alarm => ({
+        ...alarm,
+        type: typeLabels[alarm.type],
+        acknowledged: alarm.acknowledged ? '是' : '否',
+        acknowledgedBy: alarm.acknowledgedBy || '',
+        acknowledgedAt: alarm.acknowledgedAt || '',
+        resolved: alarm.resolved ? '是' : '否',
+        resolvedAt: alarm.resolvedAt || ''
+      }));
+
+      exportData(exportDataList, '告警记录', format, exportHeaders);
+      message.success(`导出${format.toUpperCase()}成功`);
+    } catch (error) {
+      message.error('导出失败');
+    }
+  };
+
+  const exportMenuItems: MenuProps['items'] = [
+    {
+      key: 'excel',
+      label: '导出为 Excel',
+      onClick: () => handleExport('excel'),
+    },
+    {
+      key: 'csv',
+      label: '导出为 CSV',
+      onClick: () => handleExport('csv'),
+    },
+    {
+      key: 'json',
+      label: '导出为 JSON',
+      onClick: () => handleExport('json'),
+    },
+  ];
 
   const showDetail = (alarm: Alarm) => {
     setSelectedAlarm(alarm);
@@ -231,6 +283,11 @@ const Alarms: React.FC = () => {
                 ]}
               />
               <Button>全部确认</Button>
+              <Dropdown menu={{ items: exportMenuItems }} placement="bottomRight">
+                <Button icon={<DownloadOutlined />}>
+                  导出数据
+                </Button>
+              </Dropdown>
             </Space>
           }
         >

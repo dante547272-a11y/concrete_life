@@ -3,10 +3,12 @@
  */
 
 import React, { useState } from 'react';
-import { Table, Card, Space, Tag, Input, Select, DatePicker, Row, Col, Statistic } from 'antd';
-import { SearchOutlined, UserOutlined, SettingOutlined, FileTextOutlined, CarOutlined, ExperimentOutlined } from '@ant-design/icons';
+import { Table, Card, Space, Tag, Input, Select, DatePicker, Row, Col, Statistic, Button, message, Dropdown } from 'antd';
+import { SearchOutlined, UserOutlined, SettingOutlined, FileTextOutlined, CarOutlined, ExperimentOutlined, DownloadOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
+import type { MenuProps } from 'antd';
 import { AppLayout } from '../components/layout';
+import { exportData } from '../utils/export';
 
 const { RangePicker } = DatePicker;
 
@@ -66,6 +68,51 @@ const Logs: React.FC = () => {
   const [searchText, setSearchText] = useState('');
   const [moduleFilter, setModuleFilter] = useState<string | undefined>();
   const [resultFilter, setResultFilter] = useState<string | undefined>();
+
+  // 导出功能
+  const handleExport = (format: 'csv' | 'excel' | 'json') => {
+    try {
+      const exportHeaders = {
+        timestamp: '时间',
+        operator: '操作员',
+        module: '模块',
+        action: '操作',
+        target: '目标',
+        detail: '详情',
+        ip: 'IP地址',
+        result: '结果'
+      };
+
+      const exportDataList = filteredData.map(log => ({
+        ...log,
+        module: moduleLabels[log.module],
+        result: log.result === 'success' ? '成功' : '失败'
+      }));
+
+      exportData(exportDataList, '操作日志', format, exportHeaders);
+      message.success(`导出${format.toUpperCase()}成功`);
+    } catch (error) {
+      message.error('导出失败');
+    }
+  };
+
+  const exportMenuItems: MenuProps['items'] = [
+    {
+      key: 'excel',
+      label: '导出为 Excel',
+      onClick: () => handleExport('excel'),
+    },
+    {
+      key: 'csv',
+      label: '导出为 CSV',
+      onClick: () => handleExport('csv'),
+    },
+    {
+      key: 'json',
+      label: '导出为 JSON',
+      onClick: () => handleExport('json'),
+    },
+  ];
 
   const columns: ColumnsType<LogRecord> = [
     {
@@ -216,6 +263,11 @@ const Logs: React.FC = () => {
                 ]}
               />
               <RangePicker />
+              <Dropdown menu={{ items: exportMenuItems }} placement="bottomRight">
+                <Button icon={<DownloadOutlined />}>
+                  导出数据
+                </Button>
+              </Dropdown>
             </Space>
           }
         >

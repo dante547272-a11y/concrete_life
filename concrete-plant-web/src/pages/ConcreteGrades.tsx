@@ -3,10 +3,12 @@
  */
 
 import React, { useState } from 'react';
-import { Table, Card, Button, Space, Tag, Input, Row, Col, Statistic } from 'antd';
-import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
+import { Table, Card, Button, Space, Tag, Input, Row, Col, Statistic, message, Dropdown } from 'antd';
+import { PlusOutlined, SearchOutlined, DownloadOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
+import type { MenuProps } from 'antd';
 import { AppLayout } from '../components/layout';
+import { exportData } from '../utils/export';
 
 interface ConcreteGrade {
   id: string;
@@ -33,6 +35,51 @@ const mockGrades: ConcreteGrade[] = [
 
 const Grades: React.FC = () => {
   const [searchText, setSearchText] = useState('');
+
+  // 导出功能
+  const handleExport = (format: 'csv' | 'excel' | 'json') => {
+    try {
+      const exportHeaders = {
+        grade: '等级',
+        strengthClass: '强度等级',
+        description: '描述',
+        slumpRange: '坍落度范围',
+        applications: '应用场景',
+        pricePerCubic: '单价(元/m³)',
+        activeRecipes: '活跃配方数',
+        status: '状态'
+      };
+
+      const exportDataList = filteredData.map(grade => ({
+        ...grade,
+        applications: grade.applications.join(', '),
+        status: grade.status === 'active' ? '启用' : '禁用'
+      }));
+
+      exportData(exportDataList, '混凝土等级', format, exportHeaders);
+      message.success(`导出${format.toUpperCase()}成功`);
+    } catch (error) {
+      message.error('导出失败');
+    }
+  };
+
+  const exportMenuItems: MenuProps['items'] = [
+    {
+      key: 'excel',
+      label: '导出为 Excel',
+      onClick: () => handleExport('excel'),
+    },
+    {
+      key: 'csv',
+      label: '导出为 CSV',
+      onClick: () => handleExport('csv'),
+    },
+    {
+      key: 'json',
+      label: '导出为 JSON',
+      onClick: () => handleExport('json'),
+    },
+  ];
 
   const columns: ColumnsType<ConcreteGrade> = [
     {
@@ -157,6 +204,11 @@ const Grades: React.FC = () => {
                 onChange={(e) => setSearchText(e.target.value)}
                 style={{ width: 200 }}
               />
+              <Dropdown menu={{ items: exportMenuItems }} placement="bottomRight">
+                <Button icon={<DownloadOutlined />}>
+                  导出数据
+                </Button>
+              </Dropdown>
               <Button type="primary" icon={<PlusOutlined />}>新增等级</Button>
             </Space>
           }

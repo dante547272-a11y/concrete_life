@@ -3,10 +3,12 @@
  */
 
 import React, { useState } from 'react';
-import { Table, Card, Button, Space, Tag, Input, Modal, Form, Select, Avatar, Popconfirm } from 'antd';
-import { PlusOutlined, SearchOutlined, EditOutlined, DeleteOutlined, UserOutlined, PhoneOutlined } from '@ant-design/icons';
+import { Table, Card, Button, Space, Tag, Input, Modal, Form, Select, Avatar, Popconfirm, message, Dropdown } from 'antd';
+import { PlusOutlined, SearchOutlined, EditOutlined, DeleteOutlined, UserOutlined, PhoneOutlined, DownloadOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
+import type { MenuProps } from 'antd';
 import { AppLayout } from '../components/layout';
+import { exportData } from '../utils/export';
 
 interface Employee {
   id: string;
@@ -51,6 +53,49 @@ const Employees: React.FC = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [form] = Form.useForm();
+
+  // 导出功能
+  const handleExport = (format: 'csv' | 'excel' | 'json') => {
+    try {
+      const exportHeaders = {
+        name: '姓名',
+        employeeNo: '工号',
+        department: '部门',
+        position: '职位',
+        phone: '电话',
+        status: '状态',
+        joinDate: '入职日期'
+      };
+
+      const exportDataList = filteredData.map(emp => ({
+        ...emp,
+        status: statusLabels[emp.status]
+      }));
+
+      exportData(exportDataList, '员工管理', format, exportHeaders);
+      message.success(`导出${format.toUpperCase()}成功`);
+    } catch (error) {
+      message.error('导出失败');
+    }
+  };
+
+  const exportMenuItems: MenuProps['items'] = [
+    {
+      key: 'excel',
+      label: '导出为 Excel',
+      onClick: () => handleExport('excel'),
+    },
+    {
+      key: 'csv',
+      label: '导出为 CSV',
+      onClick: () => handleExport('csv'),
+    },
+    {
+      key: 'json',
+      label: '导出为 JSON',
+      onClick: () => handleExport('json'),
+    },
+  ];
 
   const handleAdd = () => {
     setEditingEmployee(null);
@@ -161,6 +206,11 @@ const Employees: React.FC = () => {
                 onChange={(e) => setSearchText(e.target.value)}
                 style={{ width: 220 }}
               />
+              <Dropdown menu={{ items: exportMenuItems }} placement="bottomRight">
+                <Button icon={<DownloadOutlined />}>
+                  导出数据
+                </Button>
+              </Dropdown>
               <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>新增员工</Button>
             </Space>
           }

@@ -3,10 +3,11 @@
  */
 
 import React, { useState } from 'react';
-import { Table, Card, Button, Space, Tag, Input, DatePicker, Row, Col, Statistic, Tabs, Modal, Descriptions } from 'antd';
+import { Table, Card, Button, Space, Tag, Input, DatePicker, Row, Col, Statistic, Tabs, Modal, Descriptions, message, Dropdown } from 'antd';
 import { SearchOutlined, DownloadOutlined, PrinterOutlined, CheckOutlined, EyeOutlined } from '@ant-design/icons';
-import type { ColumnsType } from 'antd/es/table';
+import type { ColumnsType, MenuProps } from 'antd/es/table';
 import { AppLayout } from '../components/layout';
+import { exportData } from '../utils/export';
 
 const { RangePicker } = DatePicker;
 
@@ -81,6 +82,107 @@ const Billing: React.FC = () => {
   const [activeTab, setActiveTab] = useState('billing');
   const [detailVisible, setDetailVisible] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<BillingRecord | null>(null);
+
+  // 导出功能
+  const handleExportBilling = (format: 'csv' | 'excel' | 'json') => {
+    try {
+      const exportHeaders = {
+        orderNumber: '订单号',
+        customerName: '客户名称',
+        concreteGrade: '混凝土等级',
+        totalVolume: '总方量(m³)',
+        unitPrice: '单价(元/m³)',
+        totalAmount: '总金额(元)',
+        deliveryCount: '配送次数',
+        deliveryDate: '配送日期',
+        status: '状态'
+      };
+
+      const statusMap = {
+        pending: '待确认',
+        confirmed: '已确认',
+        invoiced: '已开票',
+        paid: '已付款'
+      };
+
+      const exportDataList = filteredBillingData.map(record => ({
+        ...record,
+        status: statusMap[record.status]
+      }));
+
+      exportData(exportDataList, '计费明细', format, exportHeaders);
+      message.success(`导出${format.toUpperCase()}成功`);
+    } catch (error) {
+      message.error('导出失败');
+    }
+  };
+
+  const handleExportReconciliation = (format: 'csv' | 'excel' | 'json') => {
+    try {
+      const exportHeaders = {
+        month: '月份',
+        customerName: '客户名称',
+        orderCount: '订单数量',
+        totalVolume: '总方量(m³)',
+        totalAmount: '应收金额(元)',
+        confirmedAmount: '确认金额(元)',
+        difference: '差额(元)',
+        status: '状态'
+      };
+
+      const statusMap = {
+        pending: '待确认',
+        confirmed: '已确认',
+        disputed: '有争议'
+      };
+
+      const exportDataList = filteredReconciliationData.map(record => ({
+        ...record,
+        status: statusMap[record.status]
+      }));
+
+      exportData(exportDataList, '对账明细', format, exportHeaders);
+      message.success(`导出${format.toUpperCase()}成功`);
+    } catch (error) {
+      message.error('导出失败');
+    }
+  };
+
+  const billingExportMenuItems: MenuProps['items'] = [
+    {
+      key: 'excel',
+      label: '导出为 Excel',
+      onClick: () => handleExportBilling('excel'),
+    },
+    {
+      key: 'csv',
+      label: '导出为 CSV',
+      onClick: () => handleExportBilling('csv'),
+    },
+    {
+      key: 'json',
+      label: '导出为 JSON',
+      onClick: () => handleExportBilling('json'),
+    },
+  ];
+
+  const reconciliationExportMenuItems: MenuProps['items'] = [
+    {
+      key: 'excel',
+      label: '导出为 Excel',
+      onClick: () => handleExportReconciliation('excel'),
+    },
+    {
+      key: 'csv',
+      label: '导出为 CSV',
+      onClick: () => handleExportReconciliation('csv'),
+    },
+    {
+      key: 'json',
+      label: '导出为 JSON',
+      onClick: () => handleExportReconciliation('json'),
+    },
+  ];
 
   const showDetail = (record: BillingRecord) => {
     setSelectedRecord(record);
@@ -296,7 +398,9 @@ const Billing: React.FC = () => {
                         <RangePicker />
                       </Space>
                       <Space>
-                        <Button icon={<DownloadOutlined />}>导出</Button>
+                        <Dropdown menu={{ items: billingExportMenuItems }} placement="bottomRight">
+                          <Button icon={<DownloadOutlined />}>导出数据</Button>
+                        </Dropdown>
                         <Button icon={<PrinterOutlined />}>打印</Button>
                       </Space>
                     </div>
@@ -324,7 +428,9 @@ const Billing: React.FC = () => {
                         <DatePicker picker="month" />
                       </Space>
                       <Space>
-                        <Button icon={<DownloadOutlined />}>导出对账单</Button>
+                        <Dropdown menu={{ items: reconciliationExportMenuItems }} placement="bottomRight">
+                          <Button icon={<DownloadOutlined />}>导出数据</Button>
+                        </Dropdown>
                       </Space>
                     </div>
                     <Table
