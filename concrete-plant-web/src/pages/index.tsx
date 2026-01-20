@@ -11,7 +11,6 @@ import { AppLayout } from '../components/layout';
 // Lazy load all page components for code splitting
 const LazyLogin = lazy(() => import('./Login'));
 const LazyDashboard = lazy(() => import('./Dashboard'));
-const LazyVehicles = lazy(() => import('./Vehicles'));
 const LazyDrivers = lazy(() => import('./Drivers'));
 const LazyOrders = lazy(() => import('./Orders'));
 const LazyTasks = lazy(() => import('./Tasks'));
@@ -22,11 +21,14 @@ const LazyConcreteGrades = lazy(() => import('./ConcreteGrades'));
 const LazyQuality = lazy(() => import('./Quality'));
 const LazyBilling = lazy(() => import('./Billing'));
 const LazyAlarms = lazy(() => import('./Alarms'));
+const LazyAlarmConfig = lazy(() => import('./AlarmConfig'));
 const LazyLogs = lazy(() => import('./Logs'));
 const LazyProductionControl = lazy(() => import('./ProductionControl'));
 const LazyEmployees = lazy(() => import('./Employees'));
 const LazyStrategies = lazy(() => import('./Strategies'));
-const LazyEquipment = lazy(() => import('./Equipment'));
+const LazyVehicles = lazy(() => import('./Vehicles'));
+const LazyProductionEquipment = lazy(() => import('./ProductionEquipment'));
+const LazyWastewater = lazy(() => import('./Wastewater'));
 const LazySites = lazy(() => import('./Sites'));
 
 // Loading fallback with AppLayout skeleton - keeps sidebar/header visible during page load
@@ -66,12 +68,6 @@ export const LoginPage: React.FC = () => (
 export const DashboardPage: React.FC = () => (
   <Suspense fallback={<LayoutLoadingFallback selectedKey="dashboard" />}>
     <LazyDashboard />
-  </Suspense>
-);
-
-export const VehiclesPage: React.FC = () => (
-  <Suspense fallback={<LayoutLoadingFallback selectedKey="vehicles" />}>
-    <LazyVehicles />
   </Suspense>
 );
 
@@ -135,6 +131,12 @@ export const AlarmsPage: React.FC = () => (
   </Suspense>
 );
 
+export const AlarmConfigPage: React.FC = () => (
+  <Suspense fallback={<LayoutLoadingFallback selectedKey="alarm-config" />}>
+    <LazyAlarmConfig />
+  </Suspense>
+);
+
 export const LogsPage: React.FC = () => (
   <Suspense fallback={<LayoutLoadingFallback selectedKey="logs" />}>
     <LazyLogs />
@@ -159,9 +161,21 @@ export const StrategiesPage: React.FC = () => (
   </Suspense>
 );
 
-export const EquipmentPage: React.FC = () => (
-  <Suspense fallback={<LayoutLoadingFallback selectedKey="equipment" />}>
-    <LazyEquipment />
+export const VehiclesPage: React.FC = () => (
+  <Suspense fallback={<LayoutLoadingFallback selectedKey="vehicles" />}>
+    <LazyVehicles />
+  </Suspense>
+);
+
+export const ProductionEquipmentPage: React.FC = () => (
+  <Suspense fallback={<LayoutLoadingFallback selectedKey="production-equipment" />}>
+    <LazyProductionEquipment />
+  </Suspense>
+);
+
+export const WastewaterPage: React.FC = () => (
+  <Suspense fallback={<LayoutLoadingFallback selectedKey="wastewater" />}>
+    <LazyWastewater />
   </Suspense>
 );
 

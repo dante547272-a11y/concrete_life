@@ -9,7 +9,6 @@ import zhCN from 'antd/locale/zh_CN';
 import {
   LoginPage,
   DashboardPage,
-  VehiclesPage,
   DriversPage,
   OrdersPage,
   TasksPage,
@@ -20,11 +19,14 @@ import {
   QualityPage,
   BillingPage,
   AlarmsPage,
+  AlarmConfigPage,
   LogsPage,
   ProductionControlPage,
   EmployeesPage,
   StrategiesPage,
-  EquipmentPage,
+  VehiclesPage,
+  ProductionEquipmentPage,
+  WastewaterPage,
   SitesPage,
 } from './pages';
 import { useThemeStore } from './stores/themeStore';
@@ -73,11 +75,15 @@ function App() {
 
           {/* Protected routes */}
           <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/production-control" element={<ProductionControlPage />} />
           <Route path="/sites" element={<SitesPage />} />
           
-          {/* 车辆管理 */}
+          {/* 设备管理 */}
+          <Route path="/production-control" element={<ProductionControlPage />} />
           <Route path="/vehicles" element={<VehiclesPage />} />
+          <Route path="/production-equipment" element={<ProductionEquipmentPage />} />
+          <Route path="/wastewater" element={<WastewaterPage />} />
+          
+          {/* 司机/排队 */}
           <Route path="/drivers" element={<DriversPage />} />
           <Route path="/queue" element={<QueuePage />} />
           
@@ -86,7 +92,6 @@ function App() {
           <Route path="/recipes" element={<RecipesPage />} />
           <Route path="/concrete-grades" element={<ConcreteGradesPage />} />
           <Route path="/strategies" element={<StrategiesPage />} />
-          <Route path="/equipment" element={<EquipmentPage />} />
           
           {/* 任务/订单管理 */}
           <Route path="/orders" element={<OrdersPage />} />
@@ -98,6 +103,7 @@ function App() {
           
           {/* 日志及告警 */}
           <Route path="/alarms" element={<AlarmsPage />} />
+          <Route path="/alarm-config" element={<AlarmConfigPage />} />
           <Route path="/logs" element={<LogsPage />} />
           
           {/* 员工管理 */}

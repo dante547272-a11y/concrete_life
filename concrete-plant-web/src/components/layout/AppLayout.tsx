@@ -55,20 +55,37 @@ const menuItems: MenuProps['items'] = [
     label: '生产概览',
   },
   {
-    key: 'production-control',
-    icon: <ControlOutlined />,
-    label: '生产中控',
-  },
-  {
-    key: 'vehicle-management',
-    icon: <CarOutlined />,
-    label: '车辆管理',
+    key: 'equipment-management',
+    icon: <ToolOutlined />,
+    label: '设备管理',
     children: [
+      {
+        key: 'production-control',
+        icon: <ControlOutlined />,
+        label: '生产中控',
+      },
       {
         key: 'vehicles',
         icon: <CarOutlined />,
-        label: '车辆档案',
+        label: '车辆设备',
       },
+      {
+        key: 'production-equipment',
+        icon: <ToolOutlined />,
+        label: '生产设备',
+      },
+      {
+        key: 'wastewater',
+        icon: <ExperimentOutlined />,
+        label: '零排放污水管理',
+      },
+    ],
+  },
+  {
+    key: 'driver-management',
+    icon: <CarOutlined />,
+    label: '司机/排队',
+    children: [
       {
         key: 'drivers',
         icon: <TeamOutlined />,
@@ -105,11 +122,6 @@ const menuItems: MenuProps['items'] = [
         key: 'strategies',
         icon: <SettingOutlined />,
         label: '策略管理',
-      },
-      {
-        key: 'equipment',
-        icon: <ToolOutlined />,
-        label: '设备管理',
       },
     ],
   },
@@ -156,6 +168,11 @@ const menuItems: MenuProps['items'] = [
         key: 'alarms',
         icon: <AlertOutlined />,
         label: '告警中心',
+      },
+      {
+        key: 'alarm-config',
+        icon: <SettingOutlined />,
+        label: '告警配置',
       },
       {
         key: 'logs',
@@ -232,19 +249,22 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
 
   // Map child keys to parent keys for auto-expanding
   const childToParentMap: Record<string, string> = {
-    'vehicles': 'vehicle-management',
-    'drivers': 'vehicle-management',
-    'queue': 'vehicle-management',
+    'production-control': 'equipment-management',
+    'vehicles': 'equipment-management',
+    'production-equipment': 'equipment-management',
+    'wastewater': 'equipment-management',
+    'drivers': 'driver-management',
+    'queue': 'driver-management',
     'materials': 'material-management',
     'recipes': 'material-management',
     'concrete-grades': 'material-management',
     'strategies': 'material-management',
-    'equipment': 'material-management',
     'orders': 'order-management',
     'tasks': 'order-management',
     'quality': 'quality-billing',
     'billing': 'quality-billing',
     'alarms': 'logs-alarms',
+    'alarm-config': 'logs-alarms',
     'logs': 'logs-alarms',
   };
 
