@@ -1,22 +1,922 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// 混凝土搅拌站管理系统 Prisma Schema
+// Concrete Plant Management System Prisma Schema
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
+// ============================================================================
+// 1. 基础管理表
+// ============================================================================
 
-// Placeholder model - will be replaced with actual models in Task 2
-model User {
-  id        String   @id @default(uuid())
-  username  String   @unique
+// 1.1 站点管理表
+model Site {
+  id        Int      @id @default(autoincrement())
+  name      String   // 站点名称
+  code      String   @unique // 站点编码，唯一标识
+  address   String?  // 站点详细地址
+  status    String   @default("active") // 站点状态：active-运营中，inactive-已停用，maintenance-维护中
+  manager   String?  // 站点负责人姓名
+  phone     String?  // 联系电话
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  // 关联关系
+  users                   User[]
+  userRoles               UserRole[]
+  equipment               Equipment[]
+  queue                   Queue[]
+  orders                  Orders[]
+  tasks                   Task[]
+  remoteConfigs           RemoteConfig?
+  remoteOrderLogs         RemoteOrderLog[]
+  materials               Material[]
+  materialStocks          MaterialStock[]
+  materialTransactions    MaterialTransaction[]
+  concreteGrades          ConcreteGrade[]
+  recipes                 Recipe[]
+  strategies              Strategy[]
+  productionBatches       ProductionBatch[]
+  productionComponents    ProductionComponent[]
+  qualityTests            QualityTest[]
+  slumpTests              SlumpTest[]
+  strengthTests           StrengthTest[]
+  billingRecords          BillingRecord[]
+  reconciliationRecords   ReconciliationRecord[]
+  operationLogs           OperationLog[]
+  alarms                  Alarm[]
+  alarmRules              AlarmRule[]
+  alarmNotifications      AlarmNotification[]
+  alarmSubscriptions      AlarmSubscription[]
+  systemSettings          SystemSetting[]
+  dailyProductionStats    DailyProductionStat[]
+  monthlyProductionStats  MonthlyProductionStat[]
+  equipmentDailyStats     EquipmentDailyStat[]
+  equipmentMaintenance    EquipmentMaintenance[]
+
+  @@map("sites")
+}
+
+// 1.2 用户表（合并用户/员工/司机）
+model User {
+  id             Int       @id @default(autoincrement())
+  username       String    @unique // 用户名，登录账号
+  passwordHash   String    @map("password_hash") // 密码哈希值
+  email          String?   // 邮箱地址
+  phone          String?   // 手机号码
+  name           String    // 真实姓名
+  employeeNo     String?   @map("employee_no") // 员工工号，员工类型用户必填
+  department     String?   // 所属部门
+  position       String?   // 职位
+  userType       String    @map("user_type") // 用户类型：admin-管理员，operator-操作员，driver-司机，quality-质检员，manager-经理，maintenance-维修工
+  licenseNumber  String?   @map("license_number") // 驾驶证号，司机类型用户必填
+  licenseType    String?   @map("license_type") // 驾驶证类型，如A2、B2等
+  licenseExpiry  DateTime? @map("license_expiry") // 驾驶证有效期
+  status         String    @default("active") // 用户状态：active-在职，inactive-离职，leave-请假
+  joinDate       DateTime? @map("join_date") // 入职日期
+  avatar         String?   // 头像文件路径
+  siteId         Int       @map("site_id") // 所属站点ID
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  // 关联关系
+  site                    Site @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  userRoles               UserRole[]
+  equipmentAssignments    EquipmentAssignment[]
+  queue                   Queue[]
+  tasks                   Task[]
+  createdRecipes          Recipe[]
+  productionBatches       ProductionBatch[]
+  materialTransactions    MaterialTransaction[]
+  equipmentMaintenance    EquipmentMaintenance[]
+  qualityTests            QualityTest[]
+  slumpTests              SlumpTest[]
+  strengthTests           StrengthTest[]
+  operationLogs           OperationLog[]
+  acknowledgedAlarms      Alarm[]
+  alarmSubscriptions      AlarmSubscription[]
+
   @@map("users")
+}
+
+// 1.3 角色表
+model Role {
+  id          Int      @id @default(autoincrement())
+  name        String   // 角色名称
+  description String?  // 角色描述
+  permissions String   // 权限配置，JSON格式存储
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // 关联关系
+  userRoles UserRole[]
+
+  @@map("roles")
+}
+
+// 1.4 用户角色关联表
+model UserRole {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  roleId    Int      @map("role_id")
+  siteId    Int      @map("site_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // 关联关系
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId, siteId])
+  @@map("user_roles")
+}
+
+// ============================================================================
+// 2. 设备管理模块（包含车辆）
+// ============================================================================
+
+// 2.1 设备基本信息表
+model Equipment {
+  id                   Int       @id @default(autoincrement())
+  name                 String    // 设备名称
+  equipmentType        String    @map("equipment_type") // 设备类型：vehicle-车辆，mixer-搅拌机，conveyor-输送带，silo-料仓，scale-秤，pump-泵，valve-阀门，sensor-传感器
+  model                String?   // 设备型号
+  location             String?   // 设备位置
+  capacity             Float?    // 设备容量（车辆为载重量m³，料仓为容量吨等）
+  brand                String?   // 品牌
+  year                 Int?      // 生产年份
+  plateNumber          String?   @map("plate_number") // 车牌号（仅车辆类型）
+  status               String    @default("normal") // 设备状态：normal-正常，warning-警告，critical-严重，maintenance-维护中，offline-离线
+  installDate          DateTime? @map("install_date") // 安装日期
+  purchaseDate         DateTime? @map("purchase_date") // 采购日期
+  lastMaintenanceDate  DateTime? @map("last_maintenance_date") // 上次维护日期
+  nextMaintenanceDate  DateTime? @map("next_maintenance_date") // 下次维护日期
+  healthScore          Int       @default(100) @map("health_score") // 健康度评分（0-100）
+  siteId               Int       @map("site_id")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+
+  // 关联关系
+  site                 Site @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  equipmentMetrics     EquipmentMetric[]
+  equipmentParts       EquipmentPart[]
+  equipmentMaintenance EquipmentMaintenance[]
+  equipmentAssignments EquipmentAssignment[]
+  queue                Queue[]
+  tasks                Task[]
+  productionBatches    ProductionBatch[]
+  equipmentDailyStats  EquipmentDailyStat[]
+
+  @@map("equipment")
+}
+
+// 2.2 设备指标表
+model EquipmentMetric {
+  id                 Int      @id @default(autoincrement())
+  equipmentId        Int      @map("equipment_id")
+  currentValue       Float?   @map("current_value") // 电流值（安培）
+  vibrationValue     Float?   @map("vibration_value") // 振动值（mm/s）
+  temperatureValue   Float?   @map("temperature_value") // 温度值（摄氏度）
+  startStopCount     Int      @default(0) @map("start_stop_count") // 启停次数
+  totalRunningHours  Float    @default(0) @map("total_running_hours") // 累计运行小时数
+  dailyRunningHours  Float    @default(0) @map("daily_running_hours") // 日运行小时数
+  recordedAt         DateTime @default(now()) @map("recorded_at")
+
+  // 关联关系
+  equipment Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+
+  @@map("equipment_metrics")
+}
+
+// 2.3 设备配件表
+model EquipmentPart {
+  id               Int       @id @default(autoincrement())
+  equipmentId      Int       @map("equipment_id")
+  name             String    // 配件名称
+  type             String    // 配件类型：part-配件，consumable-耗材
+  lifespan         Int       // 预期寿命（小时）
+  usedHours        Int       @default(0) @map("used_hours") // 已使用小时数
+  remainingPercent Float     @default(100) @map("remaining_percent") // 剩余寿命百分比
+  status           String    @default("good") // 配件状态：good-良好，warning-需关注，replace-需更换
+  lastReplaceDate  DateTime? @map("last_replace_date") // 上次更换日期
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  // 关联关系
+  equipment Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+
+  @@map("equipment_parts")
+}
+
+// 2.4 设备维护记录表
+model EquipmentMaintenance {
+  id              Int       @id @default(autoincrement())
+  equipmentId     Int       @map("equipment_id")
+  maintenanceType String    @map("maintenance_type") // 维护类型：routine-例行维护，repair-故障维修，upgrade-升级改造，inspection-检查
+  description     String?   // 维护描述
+  cost            Float?    // 维护费用
+  maintenanceDate DateTime  @map("maintenance_date") // 维护日期
+  operatorId      Int?      @map("operator_id") // 维护操作员ID
+  siteId          Int       @map("site_id")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  // 关联关系
+  equipment Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  operator  User?     @relation(fields: [operatorId], references: [id], onDelete: SetNull)
+  site      Site      @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@map("equipment_maintenance")
+}
+
+// 2.5 设备分配关系表
+model EquipmentAssignment {
+  id             Int       @id @default(autoincrement())
+  equipmentId    Int       @map("equipment_id")
+  userId         Int       @map("user_id")
+  assignedDate   DateTime  @map("assigned_date") // 分配日期
+  unassignedDate DateTime? @map("unassigned_date") // 取消分配日期
+  status         String    @default("active") // 分配状态：active-有效，inactive-已取消
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  // 关联关系
+  equipment Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("equipment_assignments")
+}
+
+// 2.6 排队管理表
+model Queue {
+  id                 Int       @id @default(autoincrement())
+  equipmentId        Int       @map("equipment_id") // 车辆设备ID
+  driverId           Int       @map("driver_id") // 司机用户ID
+  taskId             Int?      @map("task_id") // 关联任务ID
+  queueNumber        Int       @map("queue_number") // 排队号码
+  arrivalTime        DateTime? @map("arrival_time") // 到达时间
+  startLoadingTime   DateTime? @map("start_loading_time") // 开始装车时间
+  finishLoadingTime  DateTime? @map("finish_loading_time") // 装车完成时间
+  departureTime      DateTime? @map("departure_time") // 离场时间
+  status             String    @default("waiting") // 排队状态：waiting-等待中，loading-装车中，completed-已完成，cancelled-已取消
+  siteId             Int       @map("site_id")
+  createdAt          DateTime  @default(now()) @map("created_at")
+
+  // 关联关系
+  equipment Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  driver    User      @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  task      Task?     @relation(fields: [taskId], references: [id])
+  site      Site      @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@map("queue")
+}
+
+// ============================================================================
+// 3. 订单任务管理模块
+// ============================================================================
+
+// 3.1 订单主表
+model Orders {
+  id              Int      @id @default(autoincrement())
+  orderNumber     String   @unique @map("order_number") // 订单号，唯一标识
+  customerName    String   @map("customer_name") // 客户名称
+  contactPhone    String?  @map("contact_phone") // 联系电话
+  concreteGrade   String   @map("concrete_grade") // 混凝土等级
+  totalVolume     Float    @map("total_volume") // 总方量（立方米）
+  unitPrice       Float?   @map("unit_price") // 单价（元/立方米）
+  totalAmount     Float?   @map("total_amount") // 总金额（元）
+  deliveryAddress String   @map("delivery_address") // 配送地址
+  requiredDate    DateTime @map("required_date") // 需求日期
+  status          String   @default("pending") // 订单状态：pending-待确认，confirmed-已确认，in_progress-生产中，completed-已完成，cancelled-已取消
+  source          String   @default("local") // 订单来源：local-本地创建，remote-远端同步
+  siteId          Int      @map("site_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // 关联关系
+  site           Site           @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  orderItems     OrderItem[]
+  tasks          Task[]
+  billingRecords BillingRecord[]
+
+  @@map("orders")
+}
+
+// 3.2 订单明细表
+model OrderItem {
+  id            Int       @id @default(autoincrement())
+  orderId       Int       @map("order_id")
+  concreteGrade String    @map("concrete_grade") // 混凝土等级
+  volume        Float     // 方量（立方米）
+  unitPrice     Float     @map("unit_price") // 单价（元/立方米）
+  amount        Float     // 金额（元）
+  deliveryDate  DateTime? @map("delivery_date") // 配送日期
+  status        String    @default("pending") // 明细状态：pending-待生产，producing-生产中，completed-已完成
+
+  // 关联关系
+  order Orders @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("order_items")
+}
+
+// 3.3 任务表
+model Task {
+  id            Int       @id @default(autoincrement())
+  taskNumber    String    @unique @map("task_number") // 任务号，唯一标识
+  orderId       Int       @map("order_id") // 关联订单ID
+  equipmentId   Int?      @map("equipment_id") // 分配的车辆设备ID
+  driverId      Int?      @map("driver_id") // 分配的司机用户ID
+  concreteGrade String    @map("concrete_grade") // 混凝土等级
+  volume        Float     // 方量（立方米）
+  status        String    @default("pending") // 任务状态：pending-待分配，assigned-已分配，loading-装车中，delivering-配送中，completed-已完成，cancelled-已取消
+  assignedAt    DateTime? @map("assigned_at") // 分配时间
+  startedAt     DateTime? @map("started_at") // 开始时间
+  completedAt   DateTime? @map("completed_at") // 完成时间
+  siteId        Int       @map("site_id")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  // 关联关系
+  order             Orders             @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  equipment         Equipment?         @relation(fields: [equipmentId], references: [id], onDelete: SetNull)
+  driver            User?              @relation(fields: [driverId], references: [id], onDelete: SetNull)
+  site              Site               @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  queue             Queue[]
+  productionBatches ProductionBatch[]
+
+  @@map("tasks")
+}
+
+// 3.4 远端配置表
+model RemoteConfig {
+  id           Int       @id @default(autoincrement())
+  siteId       Int       @unique @map("site_id")
+  enabled      Boolean   @default(false) // 是否启用远端同步
+  url          String    // 远端API地址
+  apiKey       String?   @map("api_key") // API密钥
+  syncInterval Int       @default(5) @map("sync_interval") // 同步间隔（分钟）
+  lastSyncTime DateTime? @map("last_sync_time") // 上次同步时间
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  // 关联关系
+  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@map("remote_configs")
+}
+
+// 3.5 远端订单日志表
+model RemoteOrderLog {
+  id           Int      @id @default(autoincrement())
+  siteId       Int      @map("site_id")
+  syncTime     DateTime @default(now()) @map("sync_time") // 同步时间
+  ordersCount  Int      @default(0) @map("orders_count") // 同步订单总数
+  successCount Int      @default(0) @map("success_count") // 成功同步数量
+  errorCount   Int      @default(0) @map("error_count") // 失败数量
+  errorMessage String?  @map("error_message") // 错误信息
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // 关联关系
+  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@map("remote_order_logs")
+}
+// ============================================================================
+// 4. 混凝土/物料管理模块
+// ============================================================================
+
+// 4.1 原材料基本信息表
+model Material {
+  id           Int      @id @default(autoincrement())
+  name         String   // 原材料名称
+  type         String   // 原材料类型：aggregate-骨料，cement-粉料，additive-外加剂，water-水
+  specification String? // 规格型号
+  unit         String   // 计量单位（如：吨、升、千克）
+  supplier     String?  // 供应商名称
+  lowThreshold Float?   @map("low_threshold") // 低库存阈值
+  siteId       Int      @map("site_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // 关联关系
+  site                 Site                  @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  materialStocks       MaterialStock[]
+  materialTransactions MaterialTransaction[]
+  recipeItems          RecipeItem[]
+  batchingRecords      BatchingRecord[]
+
+  @@map("materials")
+}
+
+// 4.2 原材料库存表
+model MaterialStock {
+  id           Int      @id @default(autoincrement())
+  materialId   Int      @map("material_id")
+  currentStock Float    @default(0) @map("current_stock") // 当前库存数量
+  capacity     Float?   // 最大容量
+  lastUpdate   DateTime @default(now()) @map("last_update") // 最后更新时间
+  siteId       Int      @map("site_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // 关联关系
+  material Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  site     Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@unique([materialId, siteId])
+  @@map("material_stocks")
+}
+
+// 4.3 库存变动记录表
+model MaterialTransaction {
+  id              Int       @id @default(autoincrement())
+  materialId      Int       @map("material_id")
+  transactionType String    @map("transaction_type") // 变动类型：inbound-入库，outbound-出库，adjustment-调整，transfer-调拨
+  quantity        Float     // 变动数量（正数为增加，负数为减少）
+  unitPrice       Float?    @map("unit_price") // 单价
+  totalAmount     Float?    @map("total_amount") // 总金额
+  supplier        String?   // 供应商（入库时）
+  batchNumber     String?   @map("batch_number") // 批次号
+  purpose         String?   // 用途说明（出库时）
+  transactionDate DateTime  @map("transaction_date") // 变动日期
+  operatorId      Int?      @map("operator_id") // 操作员ID
+  siteId          Int       @map("site_id")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  // 关联关系
+  material Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  operator User?    @relation(fields: [operatorId], references: [id], onDelete: SetNull)
+  site     Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@map("material_transactions")
+}
+
+// 4.4 混凝土等级表
+model ConcreteGrade {
+  id            Int      @id @default(autoincrement())
+  grade         String   // 等级标识（如C30、C40）
+  strengthClass String   @map("strength_class") // 强度等级（如30MPa）
+  description   String?  // 等级描述
+  slumpRange    String?  @map("slump_range") // 坍落度范围（如160-200mm）
+  applications  String?  // 应用场景，JSON数组格式
+  pricePerCubic Float?   @map("price_per_cubic") // 单价（元/立方米）
+  status        String   @default("active") // 状态：active-启用，inactive-禁用
+  siteId        Int      @map("site_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // 关联关系
+  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@map("concrete_grades")
+}
+
+// 4.5 配方主表
+model Recipe {
+  id            Int      @id @default(autoincrement())
+  name          String   // 配方名称
+  concreteGrade String   @map("concrete_grade") // 混凝土等级
+  slump         String?  // 坍落度要求
+  version       String   @default("v1.0") // 配方版本号
+  status        String   @default("draft") // 配方状态：active-启用，draft-草稿，archived-已归档
+  createdBy     Int?     @map("created_by") // 创建人用户ID
+  siteId        Int      @map("site_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // 关联关系
+  creator           User?             @relation(fields: [createdBy], references: [id], onDelete: SetNull)
+  site              Site              @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  recipeItems       RecipeItem[]
+  productionBatches ProductionBatch[]
+
+  @@map("recipes")
+}
+
+// 4.6 配方明细表
+model RecipeItem {
+  id           Int   @id @default(autoincrement())
+  recipeId     Int   @map("recipe_id")
+  materialId   Int   @map("material_id")
+  targetWeight Float @map("target_weight") // 目标重量
+  unit         String // 计量单位
+  tolerance    Float @default(2.0) // 允许误差百分比
+  sortOrder    Int   @default(0) @map("sort_order") // 排序序号
+
+  // 关联关系
+  recipe   Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  material Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
+
+  @@map("recipe_items")
+}
+
+// 4.7 自动矫正策略表
+model Strategy {
+  id          Int      @id @default(autoincrement())
+  name        String   // 策略名称
+  type        String   // 策略类型：moisture-含水率矫正，slump-坍落度矫正，temperature-温度补偿，strength-强度调整，aggregate-骨料配比，ai-AI智能策略
+  description String?  // 策略描述
+  enabled     Boolean  @default(true) // 是否启用
+  priority    Int      @default(0) // 优先级（0为最高）
+  conditions  String?  // 触发条件，JSON格式
+  actions     String?  // 执行动作，JSON格式
+  siteId      Int      @map("site_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // 关联关系
+  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@map("strategies")
+}
+
+// ============================================================================
+// 5. 生产控制模块
+// ============================================================================
+
+// 5.1 生产批次表
+model ProductionBatch {
+  id             Int       @id @default(autoincrement())
+  batchNumber    String    @unique @map("batch_number") // 批次号，唯一标识
+  taskId         Int?      @map("task_id") // 关联任务ID
+  recipeId       Int       @map("recipe_id") // 使用的配方ID
+  concreteGrade  String    @map("concrete_grade") // 混凝土等级
+  volume         Float     // 生产方量（立方米）
+  productionTime DateTime  @default(now()) @map("production_time") // 生产时间
+  operatorId     Int?      @map("operator_id") // 操作员ID
+  equipmentId    Int?      @map("equipment_id") // 使用的设备ID（如搅拌机）
+  status         String    @default("producing") // 批次状态：producing-生产中，completed-已完成，failed-失败
+  siteId         Int       @map("site_id")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  // 关联关系
+  task            Task?            @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  recipe          Recipe           @relation(fields: [recipeId], references: [id])
+  operator        User?            @relation(fields: [operatorId], references: [id], onDelete: SetNull)
+  equipment       Equipment?       @relation(fields: [equipmentId], references: [id], onDelete: SetNull)
+  site            Site             @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  batchingRecords BatchingRecord[]
+  qualityTests    QualityTest[]
+  slumpTests      SlumpTest[]
+  strengthTests   StrengthTest[]
+
+  @@map("production_batches")
+}
+
+// 5.2 配料记录表
+model BatchingRecord {
+  id              Int     @id @default(autoincrement())
+  batchId         Int     @map("batch_id")
+  materialId      Int     @map("material_id")
+  targetWeight    Float   @map("target_weight") // 目标重量
+  actualWeight    Float   @map("actual_weight") // 实际重量
+  deviation       Float?  // 偏差百分比
+  toleranceStatus String  @default("pass") @map("tolerance_status") // 误差状态：pass-合格，warning-警告，fail-超差
+  recordedAt      DateTime @default(now()) @map("recorded_at") // 记录时间
+
+  // 关联关系
+  batch    ProductionBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  material Material        @relation(fields: [materialId], references: [id])
+
+  @@map("batching_records")
+}
+
+// 5.3 生产控制布局表
+model ProductionComponent {
+  id            Int      @id @default(autoincrement())
+  siteId        Int      @map("site_id")
+  componentType String   @map("component_type") // 组件类型（如aggregate-bin、mixer等）
+  xPosition     Float    @map("x_position") // X坐标位置
+  yPosition     Float    @map("y_position") // Y坐标位置
+  scale         Float    @default(1.0) // 缩放比例
+  properties    String?  // 组件属性配置，JSON格式
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // 关联关系
+  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@map("production_components")
+}
+
+// ============================================================================
+// 6. 质量追溯与计费模块
+// ============================================================================
+
+// 6.1 质量检测记录表
+model QualityTest {
+  id            Int      @id @default(autoincrement())
+  batchId       Int      @map("batch_id")
+  testType      String   @map("test_type") // 检测类型：slump-坍落度，strength-强度，temperature-温度，air_content-含气量
+  testValue     Float    @map("test_value") // 检测值
+  standardValue Float?   @map("standard_value") // 标准值
+  status        String   @default("pass") // 检测结果：pass-合格，fail-不合格，warning-警告
+  testTime      DateTime @default(now()) @map("test_time") // 检测时间
+  operatorId    Int?     @map("operator_id") // 检测员ID
+  siteId        Int      @map("site_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // 关联关系
+  batch    ProductionBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  operator User?           @relation(fields: [operatorId], references: [id], onDelete: SetNull)
+  site     Site            @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@map("quality_tests")
+}
+
+// 6.2 坍落度检测表
+model SlumpTest {
+  id           Int      @id @default(autoincrement())
+  batchId      Int      @map("batch_id")
+  targetSlump  Float    @map("target_slump") // 目标坍落度（mm）
+  actualSlump  Float    @map("actual_slump") // 实际坍落度（mm）
+  deviation    Float?   // 偏差值（mm）
+  status       String   @default("pass") // 检测结果
+  testTime     DateTime @default(now()) @map("test_time") // 检测时间
+  operatorId   Int?     @map("operator_id") // 检测员ID
+  siteId       Int      @map("site_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // 关联关系
+  batch    ProductionBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  operator User?           @relation(fields: [operatorId], references: [id], onDelete: SetNull)
+  site     Site            @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@map("slump_tests")
+}
+
+// 6.3 强度检测表
+model StrengthTest {
+  id             Int       @id @default(autoincrement())
+  batchId        Int       @map("batch_id")
+  testAge        Int       @map("test_age") // 检测龄期（天）
+  targetStrength Float     @map("target_strength") // 目标强度（MPa）
+  actualStrength Float?    @map("actual_strength") // 实际强度（MPa）
+  status         String    @default("pending") // 检测结果：pending-待检测
+  testTime       DateTime? @map("test_time") // 检测时间
+  operatorId     Int?      @map("operator_id") // 检测员ID
+  siteId         Int       @map("site_id")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  // 关联关系
+  batch    ProductionBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  operator User?           @relation(fields: [operatorId], references: [id], onDelete: SetNull)
+  site     Site            @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@map("strength_tests")
+}
+
+// 6.4 计费记录表
+model BillingRecord {
+  id            Int      @id @default(autoincrement())
+  orderId       Int      @map("order_id")
+  customerName  String   @map("customer_name") // 客户名称
+  concreteGrade String   @map("concrete_grade") // 混凝土等级
+  totalVolume   Float    @map("total_volume") // 总方量（立方米）
+  unitPrice     Float    @map("unit_price") // 单价（元/立方米）
+  totalAmount   Float    @map("total_amount") // 总金额（元）
+  deliveryCount Int      @default(1) @map("delivery_count") // 配送次数
+  deliveryDate  DateTime @map("delivery_date") // 配送日期
+  status        String   @default("pending") // 计费状态：pending-待确认，confirmed-已确认，invoiced-已开票，paid-已付款
+  siteId        Int      @map("site_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // 关联关系
+  order Orders @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  site  Site   @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@map("billing_records")
+}
+
+// 6.5 对账记录表
+model ReconciliationRecord {
+  id              Int      @id @default(autoincrement())
+  month           String   // 对账月份（YYYY-MM格式）
+  customerName    String   @map("customer_name") // 客户名称
+  orderCount      Int      @default(0) @map("order_count") // 订单数量
+  totalVolume     Float    @default(0) @map("total_volume") // 总方量（立方米）
+  totalAmount     Float    @default(0) @map("total_amount") // 应收金额（元）
+  confirmedAmount Float    @default(0) @map("confirmed_amount") // 确认金额（元）
+  difference      Float    @default(0) // 差额（元）
+  status          String   @default("pending") // 对账状态：pending-待确认，confirmed-已确认，disputed-有争议
+  siteId          Int      @map("site_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // 关联关系
+  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@map("reconciliation_records")
+}
+
+// ============================================================================
+// 7. 日志与告警模块
+// ============================================================================
+
+// 7.1 操作日志表
+model OperationLog {
+  id        Int      @id @default(autoincrement())
+  timestamp DateTime @default(now()) // 操作时间
+  operatorId Int?    @map("operator_id") // 操作员ID
+  module    String   // 操作模块（如vehicle、order、task等）
+  action    String   // 操作动作（如create、update、delete等）
+  target    String?  // 操作目标（如订单号、车牌号等）
+  detail    String?  // 操作详情描述
+  ipAddress String?  @map("ip_address") // 操作IP地址
+  result    String   @default("success") // 操作结果：success-成功，failure-失败
+  siteId    Int      @map("site_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // 关联关系
+  operator User? @relation(fields: [operatorId], references: [id], onDelete: SetNull)
+  site     Site  @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@map("operation_logs")
+}
+
+// 7.2 告警记录表
+model Alarm {
+  id              Int       @id @default(autoincrement())
+  alarmType       String    @map("alarm_type") // 告警类型（如equipment_failure、material_low等）
+  source          String    // 告警源（设备名称、系统模块等）
+  message         String    // 告警信息
+  severity        String    // 告警级别：critical-严重，warning-警告，info-信息
+  timestamp       DateTime  @default(now()) // 告警时间
+  acknowledged    Boolean   @default(false) // 是否已确认
+  acknowledgedBy  Int?      @map("acknowledged_by") // 确认人ID
+  acknowledgedAt  DateTime? @map("acknowledged_at") // 确认时间
+  resolved        Boolean   @default(false) // 是否已解决
+  resolvedAt      DateTime? @map("resolved_at") // 解决时间
+  siteId          Int       @map("site_id")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  // 关联关系
+  acknowledger       User?               @relation(fields: [acknowledgedBy], references: [id], onDelete: SetNull)
+  site               Site                @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  alarmNotifications AlarmNotification[]
+
+  @@map("alarms")
+}
+
+// 7.3 告警规则表
+model AlarmRule {
+  id                  Int      @id @default(autoincrement())
+  name                String   // 规则名称
+  ruleType            String   @map("rule_type") // 规则类型：equipment_failure-设备故障，material_low-物料不足，quality_deviation-质量偏差，system_error-系统错误
+  conditions          String   // 触发条件，JSON格式
+  thresholdValue      Float?   @map("threshold_value") // 阈值
+  messageTemplate     String?  @map("message_template") // 告警信息模板
+  notificationMethods String?  @map("notification_methods") // 通知方式，JSON数组格式
+  enabled             Boolean  @default(true) // 是否启用
+  siteId              Int      @map("site_id")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  // 关联关系
+  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@map("alarm_rules")
+}
+
+// 7.4 告警通知表
+model AlarmNotification {
+  id               Int       @id @default(autoincrement())
+  alarmId          Int       @map("alarm_id")
+  notificationType String    @map("notification_type") // 通知类型：email-邮件，sms-短信，push-推送，system-系统内
+  recipient        String    // 接收人（邮箱、手机号或用户ID）
+  content          String?   // 通知内容
+  sentAt           DateTime? @map("sent_at") // 发送时间
+  status           String    @default("pending") // 发送状态：pending-待发送，sent-已发送，failed-发送失败
+  siteId           Int       @map("site_id")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  // 关联关系
+  alarm Alarm @relation(fields: [alarmId], references: [id], onDelete: Cascade)
+  site  Site  @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@map("alarm_notifications")
+}
+
+// 7.5 告警订阅表
+model AlarmSubscription {
+  id                  Int      @id @default(autoincrement())
+  userId              Int      @map("user_id")
+  alarmType           String   @map("alarm_type") // 告警类型
+  notificationMethods String?  @map("notification_methods") // 通知方式，JSON数组格式
+  enabled             Boolean  @default(true) // 是否启用订阅
+  siteId              Int      @map("site_id")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  // 关联关系
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, alarmType, siteId])
+  @@map("alarm_subscriptions")
+}
+
+// ============================================================================
+// 8. 系统配置模块
+// ============================================================================
+
+// 8.1 系统配置表
+model SystemSetting {
+  id           Int      @id @default(autoincrement())
+  siteId       Int?     @map("site_id") // 站点ID，NULL表示全局配置
+  settingKey   String   @map("setting_key") // 配置键名
+  settingValue String?  @map("setting_value") // 配置值
+  description  String?  // 配置描述
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // 关联关系
+  site Site? @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@unique([siteId, settingKey])
+  @@map("system_settings")
+}
+
+// 8.2 数据字典表
+model Dictionary {
+  id          Int      @id @default(autoincrement())
+  category    String   // 字典分类（如user_type、equipment_type等）
+  code        String   // 字典编码
+  name        String   // 字典名称
+  value       String?  // 字典值
+  sortOrder   Int      @default(0) @map("sort_order") // 排序序号
+  status      String   @default("active") // 状态：active-启用，inactive-禁用
+  description String?  // 描述
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@unique([category, code])
+  @@map("dictionaries")
+}
+
+// ============================================================================
+// 9. 统计分析模块
+// ============================================================================
+
+// 9.1 日生产统计表
+model DailyProductionStat {
+  id             Int      @id @default(autoincrement())
+  siteId         Int      @map("site_id")
+  statDate       DateTime @map("stat_date") // 统计日期
+  totalBatches   Int      @default(0) @map("total_batches") // 总批次数
+  totalVolume    Float    @default(0) @map("total_volume") // 总产量（立方米）
+  concreteGrades String?  @map("concrete_grades") // 各等级产量统计，JSON格式
+  equipmentCount Int      @default(0) @map("equipment_count") // 使用设备数量
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  // 关联关系
+  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@unique([siteId, statDate])
+  @@map("daily_production_stats")
+}
+
+// 9.2 月生产统计表
+model MonthlyProductionStat {
+  id            Int      @id @default(autoincrement())
+  siteId        Int      @map("site_id")
+  yearMonth     String   @map("year_month") // 统计年月（YYYY-MM格式）
+  totalBatches  Int      @default(0) @map("total_batches") // 总批次数
+  totalVolume   Float    @default(0) @map("total_volume") // 总产量（立方米）
+  revenue       Float    @default(0) // 营业收入（元）
+  cost          Float    @default(0) // 生产成本（元）
+  profit        Float    @default(0) // 利润（元）
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  // 关联关系
+  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@unique([siteId, yearMonth])
+  @@map("monthly_production_stats")
+}
+
+// 9.3 设备运行统计表
+model EquipmentDailyStat {
+  id              Int      @id @default(autoincrement())
+  equipmentId     Int      @map("equipment_id")
+  statDate        DateTime @map("stat_date") // 统计日期
+  runningHours    Float    @default(0) @map("running_hours") // 运行小时数
+  startStopCount  Int      @default(0) @map("start_stop_count") // 启停次数
+  efficiency      Float    @default(0) // 运行效率百分比
+  maintenanceCost Float    @default(0) @map("maintenance_cost") // 维护费用（元）
+  siteId          Int      @map("site_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  // 关联关系
+  equipment Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  site      Site      @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@unique([equipmentId, statDate])
+  @@map("equipment_daily_stats")
 }

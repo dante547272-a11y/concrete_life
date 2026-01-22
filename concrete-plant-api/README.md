@@ -1,98 +1,270 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# 混凝土搅拌站管理系统 - 后端API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+基于NestJS + Prisma + SQLite的混凝土搅拌站管理系统后端服务。
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## 🚀 快速开始
 
-## Description
+### 环境要求
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- Node.js >= 18.0.0
+- npm >= 8.0.0
 
-## Project setup
+### 安装和启动
 
+#### 方式一：使用启动脚本（推荐）
+
+**Linux/macOS:**
 ```bash
-$ npm install
+cd concrete-plant-api
+./scripts/start.sh
 ```
 
-## Compile and run the project
-
-```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+**Windows:**
+```cmd
+cd concrete-plant-api
+scripts\start.bat
 ```
 
-## Run tests
+#### 方式二：手动启动
 
 ```bash
-# unit tests
-$ npm run test
+# 1. 进入项目目录
+cd concrete-plant-api
 
-# e2e tests
-$ npm run test:e2e
+# 2. 安装依赖
+npm install
 
-# test coverage
-$ npm run test:cov
+# 3. 初始化数据库
+npm run db:init
+
+# 4. 启动开发服务器
+npm run start:dev
 ```
 
-## Deployment
+### 默认登录信息
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+- **用户名**: `admin`
+- **密码**: `admin123`
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+## 📊 数据库管理
+
+### 常用命令
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+# 生成Prisma客户端
+npm run db:generate
+
+# 推送数据库架构（开发环境）
+npm run db:push
+
+# 创建迁移文件
+npm run db:migrate
+
+# 初始化数据库（推送架构 + 种子数据）
+npm run db:init
+
+# 重置数据库（清空 + 重新初始化）
+npm run db:reset
+
+# 打开Prisma Studio（数据库可视化工具）
+npm run db:studio
+
+# 运行种子脚本
+npm run db:seed
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+### 数据库架构
 
-## Resources
+系统使用SQLite数据库，包含以下主要模块：
 
-Check out a few resources that may come in handy when working with NestJS:
+- **基础管理**: 站点、用户、角色管理
+- **设备管理**: 车辆、搅拌机、料仓等设备管理
+- **订单任务**: 订单管理、任务派单、排队管理
+- **物料管理**: 原材料、库存、配方管理
+- **生产控制**: 生产批次、配料记录
+- **质量追溯**: 质量检测、计费管理
+- **日志告警**: 操作日志、告警管理
+- **系统配置**: 参数配置、数据字典
+- **统计分析**: 生产统计、设备统计
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+## 🔧 开发
 
-## Support
+### 项目结构
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+```
+src/
+├── app.module.ts          # 主应用模块
+├── app.controller.ts      # 主控制器
+├── app.service.ts         # 主服务
+├── database/              # 数据库模块
+│   ├── database.module.ts
+│   └── database.service.ts
+├── redis/                 # Redis模块
+└── prisma/               # Prisma配置
+    └── schema.prisma     # 数据库模型定义
 
-## Stay in touch
+scripts/
+├── init-database.ts      # 数据库初始化脚本
+├── start.sh             # Linux/macOS启动脚本
+└── start.bat            # Windows启动脚本
+```
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+### 环境配置
 
-## License
+复制 `.env.example` 到 `.env` 并根据需要修改配置：
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+```env
+# 应用配置
+NODE_ENV=development
+PORT=3001
+
+# SQLite数据库
+DATABASE_URL="file:./dev.db"
+
+# Redis配置
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=
+
+# JWT配置
+JWT_SECRET=your-super-secret-jwt-key-change-in-production
+JWT_EXPIRES_IN=1h
+JWT_REFRESH_EXPIRES_IN=7d
+
+# CORS配置
+CORS_ORIGIN=http://localhost:5173,http://localhost:5174
+```
+
+### API端点
+
+- **健康检查**: `GET /health`
+- **API健康检查**: `GET /api/health`
+
+## 🛠️ 脚本说明
+
+### 数据库初始化脚本
+
+`scripts/init-database.ts` 会创建以下初始数据：
+
+- **3个默认站点**: 杭州总站、宁波分站、温州分站
+- **5个系统角色**: 超级管理员、站点管理员、生产操作员、调度员、司机
+- **1个管理员用户**: admin/admin123
+- **14项数据字典**: 用户类型、设备类型、原材料类型等
+- **6个混凝土等级**: C15-C40
+- **12种原材料**: 骨料、粉料、外加剂、水
+- **11台设备**: 搅拌车、搅拌机、料仓、计量秤
+- **5个策略**: 含水率补偿、坍落度矫正、温度补偿等
+
+### 启动脚本功能
+
+启动脚本会自动执行以下操作：
+
+1. 检查Node.js环境
+2. 创建.env文件（如果不存在）
+3. 安装npm依赖
+4. 生成Prisma客户端
+5. 推送数据库架构
+6. 检查并初始化数据库
+7. 启动开发服务器
+
+## 📝 开发命令
+
+```bash
+# 开发
+npm run start:dev          # 启动开发服务器（热重载）
+npm run start:debug        # 启动调试模式
+
+# 构建
+npm run build              # 构建生产版本
+npm run start:prod         # 启动生产服务器
+
+# 代码质量
+npm run lint               # 代码检查
+npm run format             # 代码格式化
+
+# 测试
+npm test                   # 运行单元测试
+npm run test:watch         # 监听模式运行测试
+npm run test:cov           # 生成测试覆盖率报告
+npm run test:e2e           # 运行端到端测试
+```
+
+## 🔍 监控和调试
+
+### Prisma Studio
+
+Prisma Studio是一个可视化数据库管理工具：
+
+```bash
+npm run db:studio
+```
+
+访问 http://localhost:5555 查看和编辑数据库数据。
+
+### 健康检查
+
+访问以下端点检查服务状态：
+
+- http://localhost:3001/health
+- http://localhost:3001/api/health
+
+返回示例：
+```json
+{
+  "status": "ok",
+  "timestamp": "2024-01-21T10:30:00.000Z",
+  "service": "concrete-plant-api",
+  "version": "1.0.0",
+  "database": {
+    "status": "healthy",
+    "database": "connected",
+    "timestamp": "2024-01-21T10:30:00.000Z"
+  },
+  "statistics": {
+    "sites": 3,
+    "users": 1,
+    "equipment": 11,
+    "orders": 0,
+    "tasks": 0,
+    "materials": 12
+  }
+}
+```
+
+## 🚨 故障排除
+
+### 常见问题
+
+1. **端口占用**
+   ```bash
+   # 检查端口占用
+   lsof -i :3001
+   # 或修改.env中的PORT配置
+   ```
+
+2. **数据库连接失败**
+   ```bash
+   # 重新初始化数据库
+   npm run db:reset
+   ```
+
+3. **Prisma客户端版本不匹配**
+   ```bash
+   # 重新生成客户端
+   npm run db:generate
+   ```
+
+4. **依赖安装失败**
+   ```bash
+   # 清除缓存重新安装
+   rm -rf node_modules package-lock.json
+   npm install
+   ```
+
+### 日志查看
+
+开发模式下，所有数据库查询和错误信息都会在控制台输出，便于调试。
+
+## 📄 许可证
+
+本项目采用 MIT 许可证。

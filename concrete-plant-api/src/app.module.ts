@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { PrismaModule } from './prisma';
+import { DatabaseModule } from './database/database.module';
 import { RedisModule } from './redis';
 
 @Module({
@@ -11,7 +11,7 @@ import { RedisModule } from './redis';
       isGlobal: true,
       envFilePath: '.env',
     }),
-    PrismaModule,
+    DatabaseModule,
     RedisModule,
   ],
   controllers: [AppController],
