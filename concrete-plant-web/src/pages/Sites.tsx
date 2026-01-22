@@ -5,6 +5,10 @@
 
 import React, { useState } from 'react';
 import { Card, Table, Tag, Space, Button, Modal, Form, Input, Select, Descriptions, Row, Col, Statistic, message } from 'antd';
+import type { ResizeCallbackData } from 'react-resizable';
+import { Resizable } from 'react-resizable';
+import 'react-resizable/css/styles.css';
+import '../styles/resizable-table.css';
 import { 
   BankOutlined, 
   PlusOutlined, 
@@ -28,12 +32,65 @@ const statusConfig: Record<string, { color: string; text: string; icon: React.Re
   inactive: { color: 'default', text: '已停用', icon: <StopOutlined /> },
 };
 
+// 可调整大小的表头组件
+const ResizableTitle = (
+  props: React.HTMLAttributes<HTMLElement> & {
+    onResize?: (e: React.SyntheticEvent, data: ResizeCallbackData) => void;
+    width?: number;
+  }
+) => {
+  const { onResize, width, ...restProps } = props;
+
+  if (!width) {
+    return <th {...restProps} />;
+  }
+
+  return (
+    <Resizable
+      width={width}
+      height={0}
+      handle={
+        <span
+          className="react-resizable-handle"
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
+        />
+      }
+      onResize={onResize}
+      draggableOpts={{ enableUserSelectHack: false }}
+    >
+      <th {...restProps} />
+    </Resizable>
+  );
+};
+
 const Sites: React.FC = () => {
   const { sites, currentSiteId, setCurrentSite, addSite, updateSite, deleteSite } = useSiteStore();
   const [modalVisible, setModalVisible] = useState(false);
   const [detailVisible, setDetailVisible] = useState(false);
   const [selectedSite, setSelectedSite] = useState<Site | null>(null);
   const [form] = Form.useForm();
+
+  // 列宽状态
+  const [columnWidths, setColumnWidths] = useState<Record<string, number>>({
+    name: 200,
+    code: 120,
+    address: 250,
+    status: 120,
+    manager: 120,
+    phone: 150,
+    createdAt: 120,
+    action: 200,
+  });
+
+  // 处理列宽调整
+  const handleResize = (key: string) => (e: React.SyntheticEvent, { size }: ResizeCallbackData) => {
+    setColumnWidths(prev => ({
+      ...prev,
+      [key]: size.width,
+    }));
+  };
 
   const handleAdd = () => {
     setSelectedSite(null);
@@ -101,10 +158,14 @@ const Sites: React.FC = () => {
       title: '站点名称',
       dataIndex: 'name',
       key: 'name',
+      width: columnWidths.name,
+      ellipsis: {
+        showTitle: false,
+      },
       render: (name, record) => (
-        <Space>
-          <BankOutlined style={{ color: record.id === currentSiteId ? '#1890ff' : '#999' }} />
-          <a onClick={() => handleDetail(record)}>
+        <Space style={{ width: '100%' }}>
+          <BankOutlined style={{ color: record.id === currentSiteId ? '#1890ff' : '#999', flexShrink: 0 }} />
+          <a onClick={() => handleDetail(record)} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {name}
             {record.id === currentSiteId && <Tag color="blue" style={{ marginLeft: 8 }}>当前</Tag>}
           </a>
@@ -115,22 +176,38 @@ const Sites: React.FC = () => {
       title: '站点编码',
       dataIndex: 'code',
       key: 'code',
-      render: (code) => <Tag>{code}</Tag>,
+      width: columnWidths.code,
+      ellipsis: {
+        showTitle: false,
+      },
+      render: (code) => <Tag style={{ maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis' }}>{code}</Tag>,
     },
     {
       title: '地址',
       dataIndex: 'address',
       key: 'address',
-      ellipsis: true,
+      width: columnWidths.address,
+      ellipsis: {
+        showTitle: false,
+      },
+      render: (address) => (
+        <span title={address} style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {address}
+        </span>
+      ),
     },
     {
       title: '状态',
       dataIndex: 'status',
       key: 'status',
+      width: columnWidths.status,
+      ellipsis: {
+        showTitle: false,
+      },
       render: (status: string) => {
         const config = statusConfig[status];
         return (
-          <Tag color={config.color} icon={config.icon}>
+          <Tag color={config.color} icon={config.icon} style={{ maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {config.text}
           </Tag>
         );
@@ -142,23 +219,52 @@ const Sites: React.FC = () => {
       title: '负责人',
       dataIndex: 'manager',
       key: 'manager',
+      width: columnWidths.manager,
+      ellipsis: {
+        showTitle: false,
+      },
+      render: (manager) => (
+        <span title={manager} style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {manager}
+        </span>
+      ),
     },
     {
       title: '联系电话',
       dataIndex: 'phone',
       key: 'phone',
+      width: columnWidths.phone,
+      ellipsis: {
+        showTitle: false,
+      },
+      render: (phone) => (
+        <span title={phone} style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {phone}
+        </span>
+      ),
     },
     {
       title: '创建日期',
       dataIndex: 'createdAt',
       key: 'createdAt',
+      width: columnWidths.createdAt,
+      ellipsis: {
+        showTitle: false,
+      },
       sorter: (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      render: (date) => (
+        <span title={date} style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {date}
+        </span>
+      ),
     },
     {
       title: '操作',
       key: 'action',
+      width: columnWidths.action,
+      fixed: 'right',
       render: (_, record) => (
-        <Space>
+        <Space size="small" style={{ flexWrap: 'nowrap' }}>
           {record.id !== currentSiteId && record.status === 'active' && (
             <Button type="link" size="small" onClick={() => handleSetCurrent(record)}>
               切换
@@ -180,7 +286,13 @@ const Sites: React.FC = () => {
         </Space>
       ),
     },
-  ];
+  ].map((col) => ({
+    ...col,
+    onHeaderCell: (column: any) => ({
+      width: column.width,
+      onResize: handleResize(col.key as string),
+    }),
+  }));
 
   // 统计数据
   const stats = {
@@ -236,6 +348,12 @@ const Sites: React.FC = () => {
             dataSource={sites}
             rowKey="id"
             pagination={false}
+            scroll={{ x: 1200 }}
+            components={{
+              header: {
+                cell: ResizableTitle,
+              },
+            }}
           />
         </Card>
 

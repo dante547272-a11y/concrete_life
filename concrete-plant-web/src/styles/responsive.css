@@ -1,0 +1,489 @@
+/* Responsive Layout Styles */
+
+/* ============================================
+   DESKTOP OPTIMIZATIONS (1920x1080 and above)
+   ============================================ */
+
+/* Dashboard container - full screen layout */
+.dashboard-container {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  grid-template-columns: 1fr auto;
+  height: 100vh;
+  width: 100vw;
+  background: var(--bg-primary);
+  overflow: hidden;
+}
+
+/* Task info bar - top header */
+.task-info-bar {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  height: var(--header-height);
+}
+
+/* Main plant layout area */
+.plant-layout {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-rows: 1fr auto;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  overflow: hidden;
+}
+
+/* Aggregate bins section - left side */
+.aggregate-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  justify-content: flex-start;
+}
+
+/* Powder section - center */
+.powder-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+/* Mixer section - bottom center */
+.mixer-section {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--spacing-md);
+}
+
+/* Info panel - right sidebar */
+.info-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  width: 320px;
+  padding: var(--spacing-md);
+  background: var(--bg-secondary);
+  border-left: 1px solid var(--border-color);
+  overflow-y: auto;
+}
+
+/* Bin group layout */
+.bin-group {
+  display: flex;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Silo group layout */
+.silo-group {
+  display: flex;
+  gap: var(--spacing-lg);
+  justify-content: center;
+}
+
+/* Tank group layout */
+.tank-group {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: center;
+}
+
+/* Recipe table */
+.recipe-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+}
+
+.recipe-table th,
+.recipe-table td {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.recipe-table th {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.recipe-table td {
+  color: var(--text-primary);
+  font-family: 'Roboto Mono', monospace;
+}
+
+/* Production log */
+.production-log {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 300px;
+}
+
+.production-log-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-bottom: 1px solid var(--border-color);
+  font-size: var(--font-size-sm);
+}
+
+/* ============================================
+   HD DISPLAY OPTIMIZATIONS (1920px+)
+   ============================================ */
+
+@media screen and (min-width: 1920px) {
+  .dashboard-container {
+    grid-template-columns: 1fr 380px;
+  }
+  
+  .info-panel {
+    width: 380px;
+  }
+  
+  .plant-layout {
+    gap: var(--spacing-lg);
+    padding: var(--spacing-lg);
+  }
+  
+  .bin-group {
+    gap: var(--spacing-lg);
+  }
+  
+  .silo-group {
+    gap: var(--spacing-xl);
+  }
+  
+  .recipe-table {
+    font-size: var(--font-size-md);
+  }
+  
+  .recipe-table th,
+  .recipe-table td {
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+  
+  .production-log {
+    max-height: 400px;
+  }
+  
+  .production-log-item {
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: var(--font-size-md);
+  }
+}
+
+/* ============================================
+   ULTRA HD DISPLAY OPTIMIZATIONS (2560px+)
+   ============================================ */
+
+@media screen and (min-width: 2560px) {
+  .dashboard-container {
+    grid-template-columns: 1fr 480px;
+  }
+  
+  .info-panel {
+    width: 480px;
+  }
+  
+  .plant-layout {
+    gap: var(--spacing-xl);
+    padding: var(--spacing-xl);
+  }
+  
+  .recipe-table {
+    font-size: var(--font-size-lg);
+  }
+  
+  .production-log {
+    max-height: 500px;
+  }
+}
+
+/* ============================================
+   CONTROL PANEL / LARGE DISPLAY MODE
+   ============================================ */
+
+.fullscreen-mode {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+}
+
+.fullscreen-mode .task-info-bar {
+  height: calc(var(--header-height) * 1.2);
+  font-size: var(--font-size-lg);
+}
+
+.fullscreen-mode .value-display {
+  font-size: var(--font-size-2xl);
+}
+
+.fullscreen-mode .value-display-lg {
+  font-size: var(--font-size-3xl);
+}
+
+/* ============================================
+   APP LAYOUT (with sidebar)
+   ============================================ */
+
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bg-primary);
+}
+
+.app-sidebar {
+  width: var(--sidebar-width);
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  transition: width 0.3s ease;
+}
+
+.app-sidebar.collapsed {
+  width: var(--sidebar-collapsed-width);
+}
+
+.app-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.app-header {
+  height: var(--header-height);
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--spacing-md);
+}
+
+.app-content {
+  flex: 1;
+  overflow: auto;
+  padding: var(--spacing-md);
+}
+
+/* Desktop HD sidebar */
+@media screen and (min-width: 1920px) {
+  .app-sidebar {
+    width: var(--sidebar-width);
+  }
+  
+  .app-content {
+    padding: var(--spacing-lg);
+  }
+}
+
+/* ============================================
+   DATA TABLES - RESPONSIVE
+   ============================================ */
+
+.data-table-container {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  min-width: 800px;
+  border-collapse: collapse;
+}
+
+.data-table th,
+.data-table td {
+  padding: var(--spacing-sm) var(--spacing-md);
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.data-table th {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+}
+
+.data-table tr:hover {
+  background: var(--bg-tertiary);
+}
+
+@media screen and (min-width: 1920px) {
+  .data-table {
+    min-width: 1000px;
+  }
+  
+  .data-table th,
+  .data-table td {
+    padding: var(--spacing-md) var(--spacing-lg);
+    font-size: var(--font-size-md);
+  }
+}
+
+/* ============================================
+   FORMS - RESPONSIVE
+   ============================================ */
+
+.form-container {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+@media screen and (min-width: 1280px) {
+  .form-row {
+    grid-template-columns: 1fr 1fr;
+  }
+  
+  .form-row.full-width {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media screen and (min-width: 1920px) {
+  .form-container {
+    max-width: 800px;
+  }
+  
+  .form-row {
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+  }
+}
+
+/* ============================================
+   QUEUE BOARD - RESPONSIVE
+   ============================================ */
+
+.queue-board {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+}
+
+.queue-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: var(--spacing-md);
+}
+
+.queue-card.active {
+  border-color: var(--status-running);
+  box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
+}
+
+@media screen and (min-width: 1920px) {
+  .queue-board {
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: var(--spacing-lg);
+    padding: var(--spacing-lg);
+  }
+  
+  .queue-card {
+    padding: var(--spacing-lg);
+  }
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
+/* Hide on specific breakpoints */
+.hide-below-desktop {
+  display: none;
+}
+
+@media screen and (min-width: 1280px) {
+  .hide-below-desktop {
+    display: block;
+  }
+}
+
+.hide-below-hd {
+  display: none;
+}
+
+@media screen and (min-width: 1920px) {
+  .hide-below-hd {
+    display: block;
+  }
+}
+
+/* Responsive text */
+.text-responsive-sm {
+  font-size: var(--font-size-xs);
+}
+
+.text-responsive-md {
+  font-size: var(--font-size-sm);
+}
+
+.text-responsive-lg {
+  font-size: var(--font-size-md);
+}
+
+@media screen and (min-width: 1920px) {
+  .text-responsive-sm {
+    font-size: var(--font-size-sm);
+  }
+  
+  .text-responsive-md {
+    font-size: var(--font-size-md);
+  }
+  
+  .text-responsive-lg {
+    font-size: var(--font-size-lg);
+  }
+}
+
+/* Responsive spacing */
+.p-responsive {
+  padding: var(--spacing-md);
+}
+
+.m-responsive {
+  margin: var(--spacing-md);
+}
+
+.gap-responsive {
+  gap: var(--spacing-md);
+}
+
+@media screen and (min-width: 1920px) {
+  .p-responsive {
+    padding: var(--spacing-lg);
+  }
+  
+  .m-responsive {
+    margin: var(--spacing-lg);
+  }
+  
+  .gap-responsive {
+    gap: var(--spacing-lg);
+  }
+}
