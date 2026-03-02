@@ -13,7 +13,7 @@ export class SitesService {
    */
   async create(createSiteDto: CreateSiteDto, userId: number) {
     // 检查站点代码是否已存在
-    const existingSite = await this.prisma.sites.findUnique({
+    const existingSite = await this.prisma.site.findUnique({
       where: { code: createSiteDto.code },
     });
 
@@ -23,7 +23,7 @@ export class SitesService {
 
     // 如果指定了负责人，检查负责人是否存在
     if (createSiteDto.managerId) {
-      const manager = await this.prisma.users.findUnique({
+      const manager = await this.prisma.user.findUnique({
         where: { id: createSiteDto.managerId },
       });
 
@@ -33,7 +33,7 @@ export class SitesService {
     }
 
     // 创建站点
-    const site = await this.prisma.sites.create({
+    const site = await this.prisma.site.create({
       data: {
         code: createSiteDto.code,
         name: createSiteDto.name,
@@ -65,7 +65,7 @@ export class SitesService {
    * 查询站点列表
    */
   async findAll(query: QuerySiteDto) {
-    const { page = 1, limit = 10, sortBy = 'created_at', sortOrder = 'desc', ...filters } = query;
+    const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc', ...filters } = query;
     const skip = (page - 1) * limit;
 
     // 构建查询条件
@@ -93,7 +93,7 @@ export class SitesService {
 
     // 查询数据
     const [sites, total] = await Promise.all([
-      this.prisma.sites.findMany({
+      this.prisma.site.findMany({
         where,
         skip,
         take: limit,
@@ -119,7 +119,7 @@ export class SitesService {
           [sortBy]: sortOrder,
         },
       }),
-      this.prisma.sites.count({ where }),
+      this.prisma.site.count({ where }),
     ]);
 
     return {
@@ -135,7 +135,7 @@ export class SitesService {
    * 查询单个站点
    */
   async findOne(id: number) {
-    const site = await this.prisma.sites.findUnique({
+    const site = await this.prisma.site.findUnique({
       where: { id },
       include: {
         manager: {
@@ -170,7 +170,7 @@ export class SitesService {
    * 更新站点
    */
   async update(id: number, updateSiteDto: UpdateSiteDto, userId: number) {
-    const site = await this.prisma.sites.findUnique({
+    const site = await this.prisma.site.findUnique({
       where: { id },
     });
 
@@ -180,7 +180,7 @@ export class SitesService {
 
     // 如果更新站点代码，检查是否与其他站点冲突
     if (updateSiteDto.code && updateSiteDto.code !== site.code) {
-      const existingSite = await this.prisma.sites.findUnique({
+      const existingSite = await this.prisma.site.findUnique({
         where: { code: updateSiteDto.code },
       });
 
@@ -191,7 +191,7 @@ export class SitesService {
 
     // 如果更新负责人，检查负责人是否存在
     if (updateSiteDto.managerId) {
-      const manager = await this.prisma.users.findUnique({
+      const manager = await this.prisma.user.findUnique({
         where: { id: updateSiteDto.managerId },
       });
 
@@ -201,7 +201,7 @@ export class SitesService {
     }
 
     // 更新站点
-    const updatedSite = await this.prisma.sites.update({
+    const updatedSite = await this.prisma.site.update({
       where: { id },
       data: {
         code: updateSiteDto.code,
@@ -215,7 +215,7 @@ export class SitesService {
         longitude: updateSiteDto.longitude,
         status: updateSiteDto.status as any,
         remarks: updateSiteDto.remarks,
-        updated_at: new Date(),
+        updatedAt: new Date(),
       },
       include: {
         manager: {
@@ -235,7 +235,7 @@ export class SitesService {
    * 删除站点
    */
   async remove(id: number) {
-    const site = await this.prisma.sites.findUnique({
+    const site = await this.prisma.site.findUnique({
       where: { id },
       include: {
         _count: {
@@ -266,7 +266,7 @@ export class SitesService {
       throw new BadRequestException('站点存在关联数据，无法删除。请先删除或转移相关数据。');
     }
 
-    await this.prisma.sites.delete({
+    await this.prisma.site.delete({
       where: { id },
     });
 
@@ -277,7 +277,7 @@ export class SitesService {
    * 更新站点状态
    */
   async updateStatus(id: number, status: string, userId: number) {
-    const site = await this.prisma.sites.findUnique({
+    const site = await this.prisma.site.findUnique({
       where: { id },
     });
 
@@ -285,11 +285,11 @@ export class SitesService {
       throw new NotFoundException('站点不存在');
     }
 
-    const updatedSite = await this.prisma.sites.update({
+    const updatedSite = await this.prisma.site.update({
       where: { id },
       data: {
         status: status as any,
-        updated_at: new Date(),
+        updatedAt: new Date(),
       },
       include: {
         manager: {
@@ -321,14 +321,14 @@ export class SitesService {
       totalVehicles,
       totalMaterials,
     ] = await Promise.all([
-      this.prisma.sites.count({ where }),
-      this.prisma.sites.count({ where: { ...where, status: 'active' } }),
-      this.prisma.sites.count({ where: { ...where, status: 'inactive' } }),
-      this.prisma.sites.count({ where: { ...where, status: 'maintenance' } }),
-      this.prisma.orders.count({ where: id ? { site_id: id } : {} }),
-      this.prisma.production_batches.count({ where: id ? { site_id: id } : {} }),
-      this.prisma.vehicles.count({ where: id ? { site_id: id } : {} }),
-      this.prisma.materials.count({ where: id ? { site_id: id } : {} }),
+      this.prisma.site.count({ where }),
+      this.prisma.site.count({ where: { ...where, status: 'active' } }),
+      this.prisma.site.count({ where: { ...where, status: 'inactive' } }),
+      this.prisma.site.count({ where: { ...where, status: 'maintenance' } }),
+      this.prisma.orders.count({ where: id ? { siteId: id } : {} }),
+      this.prisma.production_batches.count({ where: id ? { siteId: id } : {} }),
+      this.prisma.vehicles.count({ where: id ? { siteId: id } : {} }),
+      this.prisma.material.count({ where: id ? { siteId: id } : {} }),
     ]);
 
     return {
@@ -366,49 +366,49 @@ export class SitesService {
       // 今日订单数
       this.prisma.orders.count({
         where: {
-          site_id: id,
-          created_at: { gte: startOfDay, lte: endOfDay },
+          siteId: id,
+          createdAt: { gte: startOfDay, lte: endOfDay },
         },
       }),
       // 今日批次数
       this.prisma.production_batches.count({
         where: {
-          site_id: id,
-          created_at: { gte: startOfDay, lte: endOfDay },
+          siteId: id,
+          createdAt: { gte: startOfDay, lte: endOfDay },
         },
       }),
       // 今日产量
       this.prisma.production_batches.aggregate({
         where: {
-          site_id: id,
+          siteId: id,
           status: 'completed',
-          created_at: { gte: startOfDay, lte: endOfDay },
+          createdAt: { gte: startOfDay, lte: endOfDay },
         },
-        _sum: { actual_quantity: true },
+        _sum: { actualQuantity: true },
       }),
       // 订单状态分布
       this.prisma.orders.groupBy({
         by: ['status'],
-        where: { site_id: id },
+        where: { siteId: id },
         _count: true,
       }),
       // 任务状态分布
-      this.prisma.tasks.groupBy({
+      this.prisma.task.groupBy({
         by: ['status'],
-        where: { site_id: id },
+        where: { siteId: id },
         _count: true,
       }),
       // 车辆状态分布
       this.prisma.vehicles.groupBy({
         by: ['status'],
-        where: { site_id: id },
+        where: { siteId: id },
         _count: true,
       }),
       // 低库存材料
-      this.prisma.materials.count({
+      this.prisma.material.count({
         where: {
-          site_id: id,
-          current_stock: { lte: this.prisma.materials.fields.min_stock },
+          siteId: id,
+          currentStock: { lte: this.prisma.material.fields.minStock },
         },
       }),
     ]);
@@ -418,7 +418,7 @@ export class SitesService {
       today: {
         orders: todayOrders,
         batches: todayBatches,
-        production: todayProduction._sum.actual_quantity || 0,
+        production: todayProduction._sum.actualQuantity || 0,
       },
       distribution: {
         orders: ordersByStatus,
@@ -440,7 +440,7 @@ export class SitesService {
     const latDiff = radius / 111;
     const lonDiff = radius / (111 * Math.cos(latitude * Math.PI / 180));
 
-    const sites = await this.prisma.sites.findMany({
+    const sites = await this.prisma.site.findMany({
       where: {
         status: 'active',
         latitude: {

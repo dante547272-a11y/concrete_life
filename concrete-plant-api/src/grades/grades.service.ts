@@ -168,7 +168,7 @@ export class GradesService {
         strength: updateGradeDto.strength,
         price: updateGradeDto.price,
         description: updateGradeDto.description,
-        updated_at: new Date(),
+        updatedAt: new Date(),
       },
     });
 
@@ -202,7 +202,7 @@ export class GradesService {
     await this.prisma.concrete_grades.update({
       where: { id },
       data: {
-        deleted_at: new Date(),
+        deletedAt: new Date(),
       },
     });
 

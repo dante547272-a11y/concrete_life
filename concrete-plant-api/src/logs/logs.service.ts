@@ -20,7 +20,7 @@ export class LogsService {
   ) {
     const log = await this.prisma.operation_logs.create({
       data: {
-        user_id: userId,
+        userId: userId,
         action,
         module,
         description,
@@ -37,14 +37,14 @@ export class LogsService {
    * 查询日志列表
    */
   async findAll(query: QueryLogDto) {
-    const { page = 1, limit = 10, sortBy = 'created_at', sortOrder = 'desc', ...filters } = query;
+    const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc', ...filters } = query;
     const skip = (page - 1) * limit;
 
     // 构建查询条件
     const where: any = {};
 
     if (filters.userId) {
-      where.user_id = filters.userId;
+      where.userId = filters.userId;
     }
 
     if (filters.action) {
@@ -56,7 +56,7 @@ export class LogsService {
     }
 
     if (filters.startDate && filters.endDate) {
-      where.created_at = {
+      where.createdAt = {
         gte: new Date(filters.startDate),
         lte: new Date(filters.endDate),
       };
@@ -124,7 +124,7 @@ export class LogsService {
     const where: any = {};
 
     if (startDate && endDate) {
-      where.created_at = {
+      where.createdAt = {
         gte: new Date(startDate),
         lte: new Date(endDate),
       };
@@ -160,12 +160,12 @@ export class LogsService {
         take: 10,
       }),
       this.prisma.operation_logs.groupBy({
-        by: ['user_id'],
+        by: ['userId'],
         where,
         _count: true,
         orderBy: {
           _count: {
-            user_id: 'desc',
+            userId: 'desc',
           },
         },
         take: 10,
@@ -173,8 +173,8 @@ export class LogsService {
     ]);
 
     // 获取用户信息
-    const userIds = topUsers.map(item => item.user_id);
-    const users = await this.prisma.users.findMany({
+    const userIds = topUsers.map(item => item.userId);
+    const users = await this.prisma.user.findMany({
       where: {
         id: { in: userIds },
       },
@@ -198,8 +198,8 @@ export class LogsService {
         count: item._count,
       })),
       topUsers: topUsers.map(item => ({
-        userId: item.user_id,
-        user: usersMap.get(item.user_id),
+        userId: item.userId,
+        user: usersMap.get(item.userId),
         count: item._count,
       })),
     };
@@ -211,11 +211,11 @@ export class LogsService {
   async getUserHistory(userId: number, limit: number = 20) {
     const logs = await this.prisma.operation_logs.findMany({
       where: {
-        user_id: userId,
+        userId: userId,
       },
       take: limit,
       orderBy: {
-        created_at: 'desc',
+        createdAt: 'desc',
       },
     });
 
@@ -232,7 +232,7 @@ export class LogsService {
       },
       take: limit,
       orderBy: {
-        created_at: 'desc',
+        createdAt: 'desc',
       },
       include: {
         user: {
@@ -257,7 +257,7 @@ export class LogsService {
 
     const result = await this.prisma.operation_logs.deleteMany({
       where: {
-        created_at: {
+        createdAt: {
           lt: expiryDate,
         },
       },
@@ -273,13 +273,13 @@ export class LogsService {
    * 导出日志
    */
   async exportLogs(query: QueryLogDto) {
-    const { sortBy = 'created_at', sortOrder = 'desc', ...filters } = query;
+    const { sortBy = 'createdAt', sortOrder = 'desc', ...filters } = query;
 
     // 构建查询条件
     const where: any = {};
 
     if (filters.userId) {
-      where.user_id = filters.userId;
+      where.userId = filters.userId;
     }
 
     if (filters.action) {
@@ -291,7 +291,7 @@ export class LogsService {
     }
 
     if (filters.startDate && filters.endDate) {
-      where.created_at = {
+      where.createdAt = {
         gte: new Date(filters.startDate),
         lte: new Date(filters.endDate),
       };
@@ -325,7 +325,7 @@ export class LogsService {
     const logs = await this.prisma.operation_logs.findMany({
       take: limit,
       orderBy: {
-        created_at: 'desc',
+        createdAt: 'desc',
       },
       include: {
         user: {
@@ -356,7 +356,7 @@ export class LogsService {
     ] = await Promise.all([
       this.prisma.operation_logs.count({
         where: {
-          created_at: {
+          createdAt: {
             gte: startOfDay,
             lte: endOfDay,
           },
@@ -365,7 +365,7 @@ export class LogsService {
       this.prisma.operation_logs.groupBy({
         by: ['module'],
         where: {
-          created_at: {
+          createdAt: {
             gte: startOfDay,
             lte: endOfDay,
           },
@@ -373,9 +373,9 @@ export class LogsService {
         _count: true,
       }),
       this.prisma.operation_logs.groupBy({
-        by: ['user_id'],
+        by: ['userId'],
         where: {
-          created_at: {
+          createdAt: {
             gte: startOfDay,
             lte: endOfDay,
           },

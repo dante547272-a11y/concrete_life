@@ -32,7 +32,7 @@ export class QuerySupplierDto {
 
   @IsString()
   @IsOptional()
-  sortBy?: string = 'created_at';
+  sortBy?: string = 'createdAt';
 
   @IsEnum(['asc', 'desc'], { message: '排序方向不正确' })
   @IsOptional()

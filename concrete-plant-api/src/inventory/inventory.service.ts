@@ -12,7 +12,7 @@ export class InventoryService {
    */
   async createRecord(createInventoryRecordDto: CreateInventoryRecordDto, userId: number) {
     // 检查材料是否存在
-    const material = await this.prisma.materials.findUnique({
+    const material = await this.prisma.material.findUnique({
       where: { id: createInventoryRecordDto.materialId },
     });
 
@@ -36,11 +36,11 @@ export class InventoryService {
       // 创建库存记录
       const record = await prisma.inventory_records.create({
         data: {
-          material_id: createInventoryRecordDto.materialId,
+          materialId: createInventoryRecordDto.materialId,
           type: createInventoryRecordDto.type as any,
           quantity: createInventoryRecordDto.quantity,
-          unit_price: createInventoryRecordDto.unitPrice,
-          total_price: createInventoryRecordDto.quantity * (createInventoryRecordDto.unitPrice || 0),
+          unitPrice: createInventoryRecordDto.unitPrice,
+          totalPrice: createInventoryRecordDto.quantity * (createInventoryRecordDto.unitPrice || 0),
           operator_id: userId,
           remarks: createInventoryRecordDto.remarks,
         },
@@ -57,11 +57,11 @@ export class InventoryService {
       });
 
       // 更新材料库存
-      await prisma.materials.update({
+      await prisma.material.update({
         where: { id: createInventoryRecordDto.materialId },
         data: {
           stock_quantity: newStockQuantity,
-          updated_at: new Date(),
+          updatedAt: new Date(),
         },
       });
 
@@ -75,14 +75,14 @@ export class InventoryService {
    * 查询库存记录列表
    */
   async findAll(query: QueryInventoryRecordDto) {
-    const { page = 1, limit = 10, sortBy = 'created_at', sortOrder = 'desc', ...filters } = query;
+    const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc', ...filters } = query;
     const skip = (page - 1) * limit;
 
     // 构建查询条件
     const where: any = {};
 
     if (filters.materialId) {
-      where.material_id = filters.materialId;
+      where.materialId = filters.materialId;
     }
 
     if (filters.type) {
@@ -94,7 +94,7 @@ export class InventoryService {
     }
 
     if (filters.startDate && filters.endDate) {
-      where.created_at = {
+      where.createdAt = {
         gte: new Date(filters.startDate),
         lte: new Date(filters.endDate),
       };
@@ -164,11 +164,11 @@ export class InventoryService {
     const where: any = {};
 
     if (materialId) {
-      where.material_id = materialId;
+      where.materialId = materialId;
     }
 
     if (startDate && endDate) {
-      where.created_at = {
+      where.createdAt = {
         gte: new Date(startDate),
         lte: new Date(endDate),
       };
@@ -190,19 +190,19 @@ export class InventoryService {
       }),
       this.prisma.inventory_records.aggregate({
         where: { ...where, type: 'in' },
-        _sum: { total_price: true },
+        _sum: { totalPrice: true },
       }),
       this.prisma.inventory_records.aggregate({
         where: { ...where, type: 'out' },
-        _sum: { total_price: true },
+        _sum: { totalPrice: true },
       }),
     ]);
 
     return {
       totalInQuantity: totalInQuantity._sum.quantity || 0,
       totalOutQuantity: totalOutQuantity._sum.quantity || 0,
-      totalInValue: totalInValue._sum.total_price || 0,
-      totalOutValue: totalOutValue._sum.total_price || 0,
+      totalInValue: totalInValue._sum.totalPrice || 0,
+      totalOutValue: totalOutValue._sum.totalPrice || 0,
     };
   }
 }

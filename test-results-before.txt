@@ -1,0 +1,710 @@
+
+> concrete-plant-api@1.0.0 test
+> jest
+
+FAIL test/unit/auth.service.spec.ts
+  ● AuthService › validateUser › should return user without password when credentials are valid
+
+    TypeError: Cannot redefine property: compare
+        at Function.defineProperty (<anonymous>)
+
+      68 |     it('should return user without password when credentials are valid', async () => {
+      69 |       mockPrismaService.users.findUnique.mockResolvedValue(mockUser);
+    > 70 |       jest.spyOn(bcrypt, 'compare').mockImplementation(() => Promise.resolve(true));
+         |            ^
+      71 |
+      72 |       const result = await service.validateUser('testuser', 'password123');
+      73 |
+
+      at ModuleMocker.spyOn (node_modules/jest-mock/build/index.js:776:16)
+      at Object.<anonymous> (test/unit/auth.service.spec.ts:70:12)
+
+  ● AuthService › validateUser › should return null when user not found
+
+    TypeError: service.validateUser is not a function
+
+      81 |       mockPrismaService.users.findUnique.mockResolvedValue(null);
+      82 |
+    > 83 |       const result = await service.validateUser('nonexistent', 'password123');
+         |                                    ^
+      84 |
+      85 |       expect(result).toBeNull();
+      86 |     });
+
+      at Object.<anonymous> (test/unit/auth.service.spec.ts:83:36)
+
+  ● AuthService › validateUser › should return null when password is incorrect
+
+    TypeError: Cannot redefine property: compare
+        at Function.defineProperty (<anonymous>)
+
+      88 |     it('should return null when password is incorrect', async () => {
+      89 |       mockPrismaService.users.findUnique.mockResolvedValue(mockUser);
+    > 90 |       jest.spyOn(bcrypt, 'compare').mockImplementation(() => Promise.resolve(false));
+         |            ^
+      91 |
+      92 |       const result = await service.validateUser('testuser', 'wrongpassword');
+      93 |
+
+      at ModuleMocker.spyOn (node_modules/jest-mock/build/index.js:776:16)
+      at Object.<anonymous> (test/unit/auth.service.spec.ts:90:12)
+
+  ● AuthService › validateUser › should return null when user is inactive
+
+    TypeError: service.validateUser is not a function
+
+       99 |       mockPrismaService.users.findUnique.mockResolvedValue(inactiveUser);
+      100 |
+    > 101 |       const result = await service.validateUser('testuser', 'password123');
+          |                                    ^
+      102 |
+      103 |       expect(result).toBeNull();
+      104 |     });
+
+      at Object.<anonymous> (test/unit/auth.service.spec.ts:101:36)
+
+  ● AuthService › login › should return access token when credentials are valid
+
+    TypeError: Cannot redefine property: compare
+        at Function.defineProperty (<anonymous>)
+
+      111 |
+      112 |       mockPrismaService.users.findUnique.mockResolvedValue(mockUser);
+    > 113 |       jest.spyOn(bcrypt, 'compare').mockImplementation(() => Promise.resolve(true));
+          |            ^
+      114 |       mockJwtService.sign.mockReturnValue(expectedToken);
+      115 |
+      116 |       const result = await service.login(loginDto);
+
+      at ModuleMocker.spyOn (node_modules/jest-mock/build/index.js:776:16)
+      at Object.<anonymous> (test/unit/auth.service.spec.ts:113:12)
+
+  ● AuthService › login › should throw UnauthorizedException when credentials are invalid
+
+    TypeError: Cannot redefine property: compare
+        at Function.defineProperty (<anonymous>)
+
+      126 |
+      127 |       mockPrismaService.users.findUnique.mockResolvedValue(mockUser);
+    > 128 |       jest.spyOn(bcrypt, 'compare').mockImplementation(() => Promise.resolve(false));
+          |            ^
+      129 |
+      130 |       await expect(service.login(loginDto)).rejects.toThrow(UnauthorizedException);
+      131 |     });
+
+      at ModuleMocker.spyOn (node_modules/jest-mock/build/index.js:776:16)
+      at Object.<anonymous> (test/unit/auth.service.spec.ts:128:12)
+
+  ● AuthService › register › should create new user successfully
+
+    TypeError: Cannot read properties of undefined (reading 'findUnique')
+
+      92 |
+      93 |     // 检查站点是否存在
+    > 94 |     const site = await this.prisma.sites.findUnique({
+         |                                          ^
+      95 |       where: { id: siteId },
+      96 |     });
+      97 |
+
+      at AuthService.register (src/auth/auth.service.ts:94:42)
+      at Object.<anonymous> (test/unit/auth.service.spec.ts:156:22)
+
+  ● AuthService › changePassword › should change password successfully
+
+    TypeError: Cannot redefine property: compare
+        at Function.defineProperty (<anonymous>)
+
+      183 |       mockPrismaService.users.findUnique.mockResolvedValue(mockUser);
+      184 |       mockPrismaService.users.update.mockResolvedValue({ ...mockUser, password: '$2b$10$newhash' });
+    > 185 |       jest.spyOn(bcrypt, 'compare').mockImplementation(() => Promise.resolve(true));
+          |            ^
+      186 |       jest.spyOn(bcrypt, 'hash').mockImplementation(() => Promise.resolve('$2b$10$newhash'));
+      187 |
+      188 |       const result = await service.changePassword(userId, oldPassword, newPassword);
+
+      at ModuleMocker.spyOn (node_modules/jest-mock/build/index.js:776:16)
+      at Object.<anonymous> (test/unit/auth.service.spec.ts:185:12)
+
+  ● AuthService › changePassword › should throw UnauthorizedException when old password is incorrect
+
+    TypeError: Cannot redefine property: compare
+        at Function.defineProperty (<anonymous>)
+
+      198 |
+      199 |       mockPrismaService.users.findUnique.mockResolvedValue(mockUser);
+    > 200 |       jest.spyOn(bcrypt, 'compare').mockImplementation(() => Promise.resolve(false));
+          |            ^
+      201 |
+      202 |       await expect(
+      203 |         service.changePassword(userId, oldPassword, newPassword),
+
+      at ModuleMocker.spyOn (node_modules/jest-mock/build/index.js:776:16)
+      at Object.<anonymous> (test/unit/auth.service.spec.ts:200:12)
+
+FAIL test/unit/websocket.gateway.spec.ts
+  ● EventsGateway › should be defined
+
+    TypeError: metatype is not a constructor
+
+      35 |
+      36 |   beforeEach(async () => {
+    > 37 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+      38 |       providers: [
+      39 |         EventsGateway,
+      40 |         {
+
+      at TestingInjector.instantiateClass (node_modules/@nestjs/core/injector/injector.js:373:19)
+      at callback (node_modules/@nestjs/core/injector/injector.js:65:45)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:145:24)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:70:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:98:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 4)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (test/unit/websocket.gateway.spec.ts:37:35)
+
+  ● EventsGateway › handleConnection › should handle client connection with valid token
+
+    TypeError: metatype is not a constructor
+
+      35 |
+      36 |   beforeEach(async () => {
+    > 37 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+      38 |       providers: [
+      39 |         EventsGateway,
+      40 |         {
+
+      at TestingInjector.instantiateClass (node_modules/@nestjs/core/injector/injector.js:373:19)
+      at callback (node_modules/@nestjs/core/injector/injector.js:65:45)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:145:24)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:70:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:98:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 4)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (test/unit/websocket.gateway.spec.ts:37:35)
+
+  ● EventsGateway › handleConnection › should disconnect client with invalid token
+
+    TypeError: metatype is not a constructor
+
+      35 |
+      36 |   beforeEach(async () => {
+    > 37 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+      38 |       providers: [
+      39 |         EventsGateway,
+      40 |         {
+
+      at TestingInjector.instantiateClass (node_modules/@nestjs/core/injector/injector.js:373:19)
+      at callback (node_modules/@nestjs/core/injector/injector.js:65:45)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:145:24)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:70:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:98:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 4)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (test/unit/websocket.gateway.spec.ts:37:35)
+
+  ● EventsGateway › handleDisconnect › should handle client disconnection
+
+    TypeError: metatype is not a constructor
+
+      35 |
+      36 |   beforeEach(async () => {
+    > 37 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+      38 |       providers: [
+      39 |         EventsGateway,
+      40 |         {
+
+      at TestingInjector.instantiateClass (node_modules/@nestjs/core/injector/injector.js:373:19)
+      at callback (node_modules/@nestjs/core/injector/injector.js:65:45)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:145:24)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:70:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:98:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 4)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (test/unit/websocket.gateway.spec.ts:37:35)
+
+  ● EventsGateway › handleSubscribe › should subscribe client to room
+
+    TypeError: metatype is not a constructor
+
+      35 |
+      36 |   beforeEach(async () => {
+    > 37 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+      38 |       providers: [
+      39 |         EventsGateway,
+      40 |         {
+
+      at TestingInjector.instantiateClass (node_modules/@nestjs/core/injector/injector.js:373:19)
+      at callback (node_modules/@nestjs/core/injector/injector.js:65:45)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:145:24)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:70:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:98:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 4)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (test/unit/websocket.gateway.spec.ts:37:35)
+
+  ● EventsGateway › handleUnsubscribe › should unsubscribe client from room
+
+    TypeError: metatype is not a constructor
+
+      35 |
+      36 |   beforeEach(async () => {
+    > 37 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+      38 |       providers: [
+      39 |         EventsGateway,
+      40 |         {
+
+      at TestingInjector.instantiateClass (node_modules/@nestjs/core/injector/injector.js:373:19)
+      at callback (node_modules/@nestjs/core/injector/injector.js:65:45)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:145:24)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:70:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:98:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 4)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (test/unit/websocket.gateway.spec.ts:37:35)
+
+FAIL test/unit/vehicles.service.spec.ts
+  ● VehiclesService › create › should create vehicle successfully
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "粤A12345"
+    Received: undefined
+
+      77 |
+      78 |       expect(result).toBeDefined();
+    > 79 |       expect(result.license_plate).toBe('粤A12345');
+         |                                    ^
+      80 |       expect(mockPrismaService.vehicles.create).toHaveBeenCalledWith({
+      81 |         data: expect.objectContaining({
+      82 |           license_plate: '粤A12345',
+
+      at Object.<anonymous> (test/unit/vehicles.service.spec.ts:79:36)
+
+  ● VehiclesService › update › should throw NotFoundException when new responsible user not found
+
+    expect(received).rejects.toThrow(expected)
+
+    Expected constructor: NotFoundException
+    Received constructor: ConflictException
+
+    Received message: "车牌号已存在"
+
+          216 |
+          217 |       if (existingVehicle) {
+        > 218 |         throw new ConflictException('车牌号已存在');
+              |               ^
+          219 |       }
+          220 |     }
+          221 |
+
+      at VehiclesService.update (src/vehicles/vehicles.service.ts:218:15)
+      at Object.<anonymous> (test/unit/vehicles.service.spec.ts:309:7)
+      at Object.toThrow (node_modules/expect/build/index.js:218:22)
+      at Object.<anonymous> (test/unit/vehicles.service.spec.ts:309:63)
+
+FAIL test/unit/recipes.service.spec.ts
+  ● RecipesService › update › should throw NotFoundException when new grade not found
+
+    expect(received).rejects.toThrow(expected)
+
+    Expected constructor: NotFoundException
+    Received constructor: ConflictException
+
+    Received message: "配方名称已存在"
+
+          245 |
+          246 |       if (existingRecipe) {
+        > 247 |         throw new ConflictException('配方名称已存在');
+              |               ^
+          248 |       }
+          249 |     }
+          250 |
+
+      at RecipesService.update (src/recipes/recipes.service.ts:247:15)
+      at Object.<anonymous> (test/unit/recipes.service.spec.ts:370:7)
+      at Object.toThrow (node_modules/expect/build/index.js:218:22)
+      at Object.<anonymous> (test/unit/recipes.service.spec.ts:370:64)
+
+FAIL test/unit/sites.service.spec.ts
+  ● SitesService › update › should throw ConflictException when new code already exists
+
+    expect(received).rejects.toThrow(expected)
+
+    Expected substring: "站点代码已存在"
+    Received message:   "站点不存在"
+
+          176 |
+          177 |     if (!site) {
+        > 178 |       throw new NotFoundException('站点不存在');
+              |             ^
+          179 |     }
+          180 |
+          181 |     // 如果更新站点代码，检查是否与其他站点冲突
+
+      at SitesService.update (src/sites/sites.service.ts:178:13)
+      at Object.<anonymous> (test/unit/sites.service.spec.ts:307:7)
+      at Object.toThrow (node_modules/expect/build/index.js:218:22)
+      at Object.<anonymous> (test/unit/sites.service.spec.ts:307:63)
+
+FAIL test/unit/users.service.spec.ts
+  ● UsersService › update › should throw ConflictException when new username already exists
+
+    expect(received).rejects.toThrow(expected)
+
+    Expected substring: "用户名已存在"
+    Received message:   "用户不存在"
+
+          122 |
+          123 |     if (!user) {
+        > 124 |       throw new NotFoundException('用户不存在');
+              |             ^
+          125 |     }
+          126 |
+          127 |     // 如果要更新用户名，检查是否已存在
+
+      at UsersService.update (src/users/users.service.ts:124:13)
+      at Object.<anonymous> (test/unit/users.service.spec.ts:290:7)
+      at Object.toThrow (node_modules/expect/build/index.js:218:22)
+      at Object.<anonymous> (test/unit/users.service.spec.ts:290:64)
+
+FAIL test/unit/reports.service.spec.ts
+  ● ReportsService › generateDailyReport › should generate daily report for specific date
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "2026-01-27"
+    Received: "2026-01-26"
+
+      143 |       const result = await service.generateDailyReport(undefined, '2026-01-27');
+      144 |
+    > 145 |       expect(result.date).toBe('2026-01-27');
+          |                           ^
+      146 |     });
+      147 |
+      148 |     it('should handle zero production', async () => {
+
+      at Object.<anonymous> (test/unit/reports.service.spec.ts:145:27)
+
+FAIL test/unit/orders.service.spec.ts
+  ● OrdersService › create › should create order successfully
+
+    TypeError: this.prisma.orders.findFirst is not a function
+
+      16 |
+      17 |     // 检查订单编号是否已存在
+    > 18 |     const existingOrder = await this.prisma.orders.findFirst({
+         |                                                    ^
+      19 |       where: {
+      20 |         order_no: createOrderDto.orderNo,
+      21 |         site_id: createOrderDto.siteId,
+
+      at OrdersService.create (src/orders/orders.service.ts:18:52)
+      at Object.<anonymous> (test/unit/orders.service.spec.ts:88:36)
+
+  ● OrdersService › create › should calculate total price correctly
+
+    TypeError: this.prisma.orders.findFirst is not a function
+
+      16 |
+      17 |     // 检查订单编号是否已存在
+    > 18 |     const existingOrder = await this.prisma.orders.findFirst({
+         |                                                    ^
+      19 |       where: {
+      20 |         order_no: createOrderDto.orderNo,
+      21 |         site_id: createOrderDto.siteId,
+
+      at OrdersService.create (src/orders/orders.service.ts:18:52)
+      at Object.<anonymous> (test/unit/orders.service.spec.ts:118:36)
+
+  ● OrdersService › remove › should delete order successfully
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: {"where": {"id": 1}}
+
+    Number of calls: 0
+
+      208 |
+      209 |       expect(result).toHaveProperty('message');
+    > 210 |       expect(mockPrismaService.orders.delete).toHaveBeenCalledWith({
+          |                                               ^
+      211 |         where: { id: 1 },
+      212 |       });
+      213 |     });
+
+      at Object.<anonymous> (test/unit/orders.service.spec.ts:210:47)
+
+  ● OrdersService › getStatistics › should return order statistics
+
+    expect(received).toHaveProperty(path)
+
+    Expected path: "totalRevenue"
+    Received path: []
+
+    Received value: {"statusCount": {"cancelled": 100, "completed": 100, "confirmed": 100, "inProduction": 100, "pending": 100}, "totalAmount": 0, "totalOrders": 100, "totalVolume": 0}
+
+      231 |
+      232 |       expect(result).toHaveProperty('totalOrders');
+    > 233 |       expect(result).toHaveProperty('totalRevenue');
+          |                      ^
+      234 |       expect(result.totalOrders).toBe(100);
+      235 |       expect(result.totalRevenue).toBe(500000);
+      236 |     });
+
+      at Object.<anonymous> (test/unit/orders.service.spec.ts:233:22)
+
+FAIL test/unit/materials.service.spec.ts
+  ● MaterialsService › create › should create material successfully
+
+    TypeError: this.prisma.materials.findFirst is not a function
+
+      14 |   async create(createMaterialDto: CreateMaterialDto, userId: number) {
+      15 |     // 检查材料名称是否已存在
+    > 16 |     const existingMaterial = await this.prisma.materials.findFirst({
+         |                                                          ^
+      17 |       where: {
+      18 |         name: createMaterialDto.name,
+      19 |         site_id: createMaterialDto.siteId,
+
+      at MaterialsService.create (src/materials/materials.service.ts:16:58)
+      at Object.<anonymous> (test/unit/materials.service.spec.ts:82:36)
+
+  ● MaterialsService › findAll › should filter by category
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: ObjectContaining {"where": ObjectContaining {"category": "cement"}}
+    Received: {"include": {"creator": {"select": {"id": true, "name": true, "username": true}}, "site": true, "supplier": true}, "orderBy": {"created_at": "desc"}, "skip": 0, "take": 10, "where": {}}
+
+    Number of calls: 1
+
+      110 |       await service.findAll(query);
+      111 |
+    > 112 |       expect(mockPrismaService.materials.findMany).toHaveBeenCalledWith(
+          |                                                    ^
+      113 |         expect.objectContaining({
+      114 |           where: expect.objectContaining({ category: 'cement' }),
+      115 |         }),
+
+      at Object.<anonymous> (test/unit/materials.service.spec.ts:112:52)
+
+  ● MaterialsService › update › should update material successfully
+
+    TypeError: this.prisma.materials.findFirst is not a function
+
+      202 |     // 如果修改名称，检查是否重复
+      203 |     if (updateMaterialDto.name && updateMaterialDto.name !== material.name) {
+    > 204 |       const existingMaterial = await this.prisma.materials.findFirst({
+          |                                                            ^
+      205 |         where: {
+      206 |           name: updateMaterialDto.name,
+      207 |           site_id: material.site_id,
+
+      at MaterialsService.update (src/materials/materials.service.ts:204:60)
+      at Object.<anonymous> (test/unit/materials.service.spec.ts:149:22)
+
+  ● MaterialsService › getLowStockMaterials › should return materials with low stock
+
+    expect(received).toHaveLength(expected)
+
+    Expected length: 1
+    Received length: 0
+    Received array:  []
+
+      166 |       const result = await service.getLowStockMaterials();
+      167 |
+    > 168 |       expect(result).toHaveLength(1);
+          |                      ^
+      169 |       expect(result[0].current_stock).toBeLessThan(result[0].min_stock);
+      170 |     });
+      171 |   });
+
+      at Object.<anonymous> (test/unit/materials.service.spec.ts:168:22)
+
+  ● MaterialsService › getStatistics › should return material statistics
+
+    TypeError: this.prisma.materials.aggregate is not a function
+
+      309 |         },
+      310 |       }),
+    > 311 |       this.prisma.materials.aggregate({
+          |                             ^
+      312 |         where,
+      313 |         _sum: {
+      314 |           stock_quantity: true,
+
+      at MaterialsService.getStatistics (src/materials/materials.service.ts:311:29)
+      at Object.<anonymous> (test/unit/materials.service.spec.ts:180:36)
+
+FAIL test/unit/dashboard.service.spec.ts
+  ● DashboardService › getOverview › should return dashboard overview data
+
+    TypeError: Cannot read properties of undefined (reading 'count')
+
+      94 |       
+      95 |       // 任务统计
+    > 96 |       this.prisma.tasks.count({ where }),
+         |                         ^
+      97 |       this.prisma.tasks.count({
+      98 |         where: { ...where, status: 'pending' },
+      99 |       }),
+
+      at DashboardService.getOverview (src/dashboard/dashboard.service.ts:96:25)
+      at Object.<anonymous> (test/unit/dashboard.service.spec.ts:84:36)
+
+  ● DashboardService › getProductionTrend › should return production trend data
+
+    TypeError: Cannot read properties of undefined (reading 'mockResolvedValue')
+
+      102 |       ];
+      103 |
+    > 104 |       mockPrismaService.production_batches.findMany.mockResolvedValue(
+          |                                                     ^
+      105 |         mockTrendData.map(d => ({
+      106 |           created_at: new Date(d.date),
+      107 |           actual_quantity: d._sum.actual_quantity,
+
+      at Object.<anonymous> (test/unit/dashboard.service.spec.ts:104:53)
+
+  ● DashboardService › getOrderStatistics › should return order statistics by status
+
+    TypeError: service.getOrderStatistics is not a function
+
+      126 |         .mockResolvedValueOnce(2);  // cancelled
+      127 |
+    > 128 |       const result = await service.getOrderStatistics();
+          |                                    ^
+      129 |
+      130 |       expect(result).toHaveProperty('byStatus');
+      131 |       expect(result.byStatus).toHaveProperty('pending');
+
+      at Object.<anonymous> (test/unit/dashboard.service.spec.ts:128:36)
+
+FAIL test/unit/analytics.service.spec.ts
+  ● AnalyticsService › getProductionAnalytics › should return production analytics data
+
+    TypeError: this.prisma.production_batches.count is not a function
+
+      33 |     ] = await Promise.all([
+      34 |       // 总批次数
+    > 35 |       this.prisma.production_batches.count({ where }),
+         |                                      ^
+      36 |       
+      37 |       // 完成批次数
+      38 |       this.prisma.production_batches.count({
+
+      at AnalyticsService.getProductionAnalytics (src/analytics/analytics.service.ts:35:38)
+      at Object.<anonymous> (test/unit/analytics.service.spec.ts:76:36)
+
+  ● AnalyticsService › getEfficiencyAnalytics › should calculate efficiency metrics
+
+    TypeError: Cannot read properties of undefined (reading 'count')
+
+      181 |
+      182 |     const [totalTasks, avgTaskDuration] = await Promise.all([
+    > 183 |       this.prisma.tasks.count({ where: taskWhere }),
+          |                         ^
+      184 |       this.prisma.$queryRaw`
+      185 |         SELECT AVG(TIMESTAMPDIFF(MINUTE, created_at, updated_at)) as avg_duration
+      186 |         FROM tasks
+
+      at AnalyticsService.getEfficiencyAnalytics (src/analytics/analytics.service.ts:183:25)
+      at Object.<anonymous> (test/unit/analytics.service.spec.ts:107:22)
+
+  ● AnalyticsService › getQualityAnalytics › should return quality analytics data
+
+    TypeError: this.prisma.$queryRaw is not a function
+
+      248 |       JOIN production_batches pb ON br.batch_id = pb.id
+      249 |       WHERE pb.status = 'completed'
+    > 250 |       ${siteId ? this.prisma.$queryRaw`AND pb.site_id = ${siteId}` : this.prisma.$queryRaw``}
+          |                                       ^
+      251 |       ${startDate && endDate ? this.prisma.$queryRaw`AND pb.created_at BETWEEN ${startDate} AND ${endDate}` : this.prisma.$queryRaw``}
+      252 |       GROUP BY m.id, m.name
+      253 |       ORDER BY ABS(avg_deviation) DESC
+
+      at AnalyticsService.getQualityAnalytics (src/analytics/analytics.service.ts:250:39)
+      at Object.<anonymous> (test/unit/analytics.service.spec.ts:135:36)
+
+  ● AnalyticsService › getMaterialConsumption › should return material consumption data
+
+    TypeError: service.getMaterialConsumption is not a function
+
+      167 |       });
+      168 |
+    > 169 |       const result = await service.getMaterialConsumption(startDate, endDate);
+          |                                    ^
+      170 |
+      171 |       expect(result).toHaveProperty('totalConsumption');
+      172 |       expect(result).toHaveProperty('byMaterial');
+
+      at Object.<anonymous> (test/unit/analytics.service.spec.ts:169:36)
+
+PASS test/unit/tasks.service.spec.ts
+PASS test/unit/production.service.spec.ts
+PASS src/app.controller.spec.ts
+PASS test/unit/config.service.spec.ts
+PASS test/unit/alarms.service.spec.ts
+PASS test/unit/suppliers.service.spec.ts
+PASS test/unit/logs.service.spec.ts
+
+Test Suites: 11 failed, 7 passed, 18 total
+Tests:       37 failed, 271 passed, 308 total
+Snapshots:   0 total
+Time:        1.28 s
+Ran all test suites.

@@ -12,7 +12,7 @@ export class AlarmsService {
    * 创建告警
    */
   async create(createAlarmDto: CreateAlarmDto, userId?: number) {
-    const alarm = await this.prisma.alarms.create({
+    const alarm = await this.prisma.alarm.create({
       data: {
         type: createAlarmDto.type as any,
         level: createAlarmDto.level as any,
@@ -20,7 +20,7 @@ export class AlarmsService {
         message: createAlarmDto.message,
         source: createAlarmDto.source,
         source_id: createAlarmDto.sourceId,
-        site_id: createAlarmDto.siteId,
+        siteId: createAlarmDto.siteId,
         status: 'pending',
         triggered_at: new Date(),
         data: createAlarmDto.data ? JSON.stringify(createAlarmDto.data) : null,
@@ -60,7 +60,7 @@ export class AlarmsService {
     }
 
     if (filters.siteId) {
-      where.site_id = filters.siteId;
+      where.siteId = filters.siteId;
     }
 
     if (filters.startDate && filters.endDate) {
@@ -72,7 +72,7 @@ export class AlarmsService {
 
     // 查询数据
     const [alarms, total] = await Promise.all([
-      this.prisma.alarms.findMany({
+      this.prisma.alarm.findMany({
         where,
         skip,
         take: limit,
@@ -97,7 +97,7 @@ export class AlarmsService {
           [sortBy]: sortOrder,
         },
       }),
-      this.prisma.alarms.count({ where }),
+      this.prisma.alarm.count({ where }),
     ]);
 
     return {
@@ -113,7 +113,7 @@ export class AlarmsService {
    * 查询单个告警
    */
   async findOne(id: number) {
-    const alarm = await this.prisma.alarms.findUnique({
+    const alarm = await this.prisma.alarm.findUnique({
       where: { id },
       include: {
         site: true,
@@ -145,7 +145,7 @@ export class AlarmsService {
    * 更新告警
    */
   async update(id: number, updateAlarmDto: UpdateAlarmDto, userId: number) {
-    const alarm = await this.prisma.alarms.findUnique({
+    const alarm = await this.prisma.alarm.findUnique({
       where: { id },
     });
 
@@ -153,7 +153,7 @@ export class AlarmsService {
       throw new NotFoundException('告警不存在');
     }
 
-    const updatedAlarm = await this.prisma.alarms.update({
+    const updatedAlarm = await this.prisma.alarm.update({
       where: { id },
       data: {
         title: updateAlarmDto.title,
@@ -174,7 +174,7 @@ export class AlarmsService {
    * 确认告警
    */
   async acknowledge(id: number, userId: number, remarks?: string) {
-    const alarm = await this.prisma.alarms.findUnique({
+    const alarm = await this.prisma.alarm.findUnique({
       where: { id },
     });
 
@@ -186,7 +186,7 @@ export class AlarmsService {
       throw new BadRequestException('只能确认待处理的告警');
     }
 
-    const updatedAlarm = await this.prisma.alarms.update({
+    const updatedAlarm = await this.prisma.alarm.update({
       where: { id },
       data: {
         status: 'acknowledged',
@@ -213,7 +213,7 @@ export class AlarmsService {
    * 解决告警
    */
   async resolve(id: number, userId: number, solution?: string) {
-    const alarm = await this.prisma.alarms.findUnique({
+    const alarm = await this.prisma.alarm.findUnique({
       where: { id },
     });
 
@@ -225,7 +225,7 @@ export class AlarmsService {
       throw new BadRequestException('告警已解决');
     }
 
-    const updatedAlarm = await this.prisma.alarms.update({
+    const updatedAlarm = await this.prisma.alarm.update({
       where: { id },
       data: {
         status: 'resolved',
@@ -252,7 +252,7 @@ export class AlarmsService {
    * 忽略告警
    */
   async ignore(id: number, userId: number, reason?: string) {
-    const alarm = await this.prisma.alarms.findUnique({
+    const alarm = await this.prisma.alarm.findUnique({
       where: { id },
     });
 
@@ -260,7 +260,7 @@ export class AlarmsService {
       throw new NotFoundException('告警不存在');
     }
 
-    const updatedAlarm = await this.prisma.alarms.update({
+    const updatedAlarm = await this.prisma.alarm.update({
       where: { id },
       data: {
         status: 'ignored',
@@ -280,7 +280,7 @@ export class AlarmsService {
    * 删除告警
    */
   async remove(id: number) {
-    const alarm = await this.prisma.alarms.findUnique({
+    const alarm = await this.prisma.alarm.findUnique({
       where: { id },
     });
 
@@ -288,7 +288,7 @@ export class AlarmsService {
       throw new NotFoundException('告警不存在');
     }
 
-    await this.prisma.alarms.delete({
+    await this.prisma.alarm.delete({
       where: { id },
     });
 
@@ -302,7 +302,7 @@ export class AlarmsService {
     const where: any = {};
 
     if (siteId) {
-      where.site_id = siteId;
+      where.siteId = siteId;
     }
 
     if (startDate && endDate) {
@@ -324,16 +324,16 @@ export class AlarmsService {
       lowAlarms,
       alarmsByType,
     ] = await Promise.all([
-      this.prisma.alarms.count({ where }),
-      this.prisma.alarms.count({ where: { ...where, status: 'pending' } }),
-      this.prisma.alarms.count({ where: { ...where, status: 'acknowledged' } }),
-      this.prisma.alarms.count({ where: { ...where, status: 'resolved' } }),
-      this.prisma.alarms.count({ where: { ...where, status: 'ignored' } }),
-      this.prisma.alarms.count({ where: { ...where, level: 'critical' } }),
-      this.prisma.alarms.count({ where: { ...where, level: 'high' } }),
-      this.prisma.alarms.count({ where: { ...where, level: 'medium' } }),
-      this.prisma.alarms.count({ where: { ...where, level: 'low' } }),
-      this.prisma.alarms.groupBy({
+      this.prisma.alarm.count({ where }),
+      this.prisma.alarm.count({ where: { ...where, status: 'pending' } }),
+      this.prisma.alarm.count({ where: { ...where, status: 'acknowledged' } }),
+      this.prisma.alarm.count({ where: { ...where, status: 'resolved' } }),
+      this.prisma.alarm.count({ where: { ...where, status: 'ignored' } }),
+      this.prisma.alarm.count({ where: { ...where, level: 'critical' } }),
+      this.prisma.alarm.count({ where: { ...where, level: 'high' } }),
+      this.prisma.alarm.count({ where: { ...where, level: 'medium' } }),
+      this.prisma.alarm.count({ where: { ...where, level: 'low' } }),
+      this.prisma.alarm.groupBy({
         by: ['type'],
         where,
         _count: true,
@@ -368,10 +368,10 @@ export class AlarmsService {
     const where: any = {};
 
     if (siteId) {
-      where.site_id = siteId;
+      where.siteId = siteId;
     }
 
-    const alarms = await this.prisma.alarms.findMany({
+    const alarms = await this.prisma.alarm.findMany({
       where,
       take: limit,
       orderBy: {
@@ -389,7 +389,7 @@ export class AlarmsService {
    * 批量确认告警
    */
   async batchAcknowledge(ids: number[], userId: number, remarks?: string) {
-    const result = await this.prisma.alarms.updateMany({
+    const result = await this.prisma.alarm.updateMany({
       where: {
         id: { in: ids },
         status: 'pending',
@@ -412,7 +412,7 @@ export class AlarmsService {
    * 批量解决告警
    */
   async batchResolve(ids: number[], userId: number, solution?: string) {
-    const result = await this.prisma.alarms.updateMany({
+    const result = await this.prisma.alarm.updateMany({
       where: {
         id: { in: ids },
         status: { in: ['pending', 'acknowledged'] },
@@ -438,10 +438,10 @@ export class AlarmsService {
     const alarms = [];
 
     // 1. 检查低库存材料
-    const lowStockMaterials = await this.prisma.materials.findMany({
+    const lowStockMaterials = await this.prisma.material.findMany({
       where: {
-        current_stock: {
-          lte: this.prisma.materials.fields.min_stock,
+        currentStock: {
+          lte: this.prisma.material.fields.minStock,
         },
       },
       include: {
@@ -451,7 +451,7 @@ export class AlarmsService {
 
     for (const material of lowStockMaterials) {
       // 检查是否已存在相同的未处理告警
-      const existingAlarm = await this.prisma.alarms.findFirst({
+      const existingAlarm = await this.prisma.alarm.findFirst({
         where: {
           type: 'low_stock',
           source: 'material',
@@ -463,17 +463,17 @@ export class AlarmsService {
       if (!existingAlarm) {
         const alarm = await this.create({
           type: 'low_stock',
-          level: material.current_stock <= material.min_stock * 0.5 ? 'high' : 'medium',
+          level: material.currentStock <= material.minStock * 0.5 ? 'high' : 'medium',
           title: '材料库存不足',
-          message: `材料 ${material.name} 库存不足，当前库存：${material.current_stock}${material.unit}，最小库存：${material.min_stock}${material.unit}`,
+          message: `材料 ${material.name} 库存不足，当前库存：${material.currentStock}${material.unit}，最小库存：${material.minStock}${material.unit}`,
           source: 'material',
           sourceId: material.id,
-          siteId: material.site_id,
+          siteId: material.siteId,
           data: {
             materialId: material.id,
             materialName: material.name,
-            currentStock: material.current_stock,
-            minStock: material.min_stock,
+            currentStock: material.currentStock,
+            minStock: material.minStock,
             unit: material.unit,
           },
         });
@@ -492,7 +492,7 @@ export class AlarmsService {
     });
 
     for (const vehicle of faultVehicles) {
-      const existingAlarm = await this.prisma.alarms.findFirst({
+      const existingAlarm = await this.prisma.alarm.findFirst({
         where: {
           type: 'vehicle_fault',
           source: 'vehicle',
@@ -509,7 +509,7 @@ export class AlarmsService {
           message: `车辆 ${vehicle.plate_number} 发生故障`,
           source: 'vehicle',
           sourceId: vehicle.id,
-          siteId: vehicle.site_id,
+          siteId: vehicle.siteId,
           data: {
             vehicleId: vehicle.id,
             plateNumber: vehicle.plate_number,
@@ -524,10 +524,10 @@ export class AlarmsService {
     const now = new Date();
     const timeoutThreshold = new Date(now.getTime() - 4 * 60 * 60 * 1000); // 4小时前
 
-    const timeoutTasks = await this.prisma.tasks.findMany({
+    const timeoutTasks = await this.prisma.task.findMany({
       where: {
         status: { in: ['assigned', 'in_progress', 'loading', 'transporting', 'unloading'] },
-        created_at: {
+        createdAt: {
           lt: timeoutThreshold,
         },
       },
@@ -538,7 +538,7 @@ export class AlarmsService {
     });
 
     for (const task of timeoutTasks) {
-      const existingAlarm = await this.prisma.alarms.findFirst({
+      const existingAlarm = await this.prisma.alarm.findFirst({
         where: {
           type: 'task_timeout',
           source: 'task',
@@ -555,12 +555,12 @@ export class AlarmsService {
           message: `任务 #${task.id} 执行超时，已超过4小时`,
           source: 'task',
           sourceId: task.id,
-          siteId: task.site_id,
+          siteId: task.siteId,
           data: {
             taskId: task.id,
-            orderId: task.order_id,
+            orderId: task.orderId,
             status: task.status,
-            createdAt: task.created_at,
+            createdAt: task.createdAt,
           },
         });
         alarms.push(alarm);

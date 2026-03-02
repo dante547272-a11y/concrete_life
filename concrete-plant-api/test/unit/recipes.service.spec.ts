@@ -28,7 +28,7 @@ describe('RecipesService', () => {
     recipe_details: {
       createMany: jest.fn(),
     },
-    $transaction: jest.fn(),
+    $transaction: jest.fn((callback) => callback(mockPrismaService)),
   };
 
   beforeEach(async () => {

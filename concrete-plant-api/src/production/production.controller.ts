@@ -4,7 +4,7 @@ import { CreateBatchDto } from './dto/create-batch.dto';
 import { UpdateBatchDto } from './dto/update-batch.dto';
 import { QueryBatchDto } from './dto/query-batch.dto';
 import { CreateBatchRecordDto } from './dto/create-batch-record.dto';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('production')
 @UseGuards(JwtAuthGuard)
@@ -12,7 +12,7 @@ export class ProductionController {
   constructor(private readonly productionService: ProductionService) {}
 
   @Post('batches')
-  createBatch(@Body() createBatchDto: CreateBatchDto, @Request() req) {
+  createBatch(@Body() createBatchDto: CreateBatchDto, @Request() req: any) {
     return this.productionService.createBatch(createBatchDto, req.user.userId);
   }
 
@@ -27,27 +27,27 @@ export class ProductionController {
   }
 
   @Patch('batches/:id')
-  updateBatch(@Param('id') id: string, @Body() updateBatchDto: UpdateBatchDto, @Request() req) {
+  updateBatch(@Param('id') id: string, @Body() updateBatchDto: UpdateBatchDto, @Request() req: any) {
     return this.productionService.updateBatch(+id, updateBatchDto, req.user.userId);
   }
 
   @Post('batches/:id/start')
-  startBatch(@Param('id') id: string, @Request() req) {
+  startBatch(@Param('id') id: string, @Request() req: any) {
     return this.productionService.startBatch(+id, req.user.userId);
   }
 
   @Post('batches/:id/complete')
-  completeBatch(@Param('id') id: string, @Body('actualQuantity') actualQuantity: number, @Request() req) {
+  completeBatch(@Param('id') id: string, @Body('actualQuantity') actualQuantity: number, @Request() req: any) {
     return this.productionService.completeBatch(+id, actualQuantity, req.user.userId);
   }
 
   @Post('records')
-  createBatchRecord(@Body() createBatchRecordDto: CreateBatchRecordDto, @Request() req) {
+  createBatchRecord(@Body() createBatchRecordDto: CreateBatchRecordDto, @Request() req: any) {
     return this.productionService.createBatchRecord(createBatchRecordDto, req.user.userId);
   }
 
   @Patch('records/:id')
-  updateBatchRecord(@Param('id') id: string, @Body('actualQuantity') actualQuantity: number, @Request() req) {
+  updateBatchRecord(@Param('id') id: string, @Body('actualQuantity') actualQuantity: number, @Request() req: any) {
     return this.productionService.updateBatchRecord(+id, actualQuantity, req.user.userId);
   }
 

@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, Re
 import { ConfigService } from './config.service';
 import { CreateConfigDto } from './dto/create-config.dto';
 import { UpdateConfigDto } from './dto/update-config.dto';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Public } from '../auth/decorators/public.decorator';
 
@@ -31,7 +31,7 @@ export class ConfigController {
 
   @Post()
   @Roles('admin')
-  create(@Body() createConfigDto: CreateConfigDto, @Request() req) {
+  create(@Body() createConfigDto: CreateConfigDto, @Request() req: any) {
     return this.configService.create(createConfigDto, req.user.userId);
   }
 
@@ -45,7 +45,7 @@ export class ConfigController {
   @Roles('admin')
   batchUpdate(
     @Body('configs') configs: Array<{ key: string; value: any }>,
-    @Request() req,
+    @Request() req: any,
   ) {
     return this.configService.batchUpdate(configs, req.user.userId);
   }
@@ -55,7 +55,7 @@ export class ConfigController {
   update(
     @Param('key') key: string,
     @Body() updateConfigDto: UpdateConfigDto,
-    @Request() req,
+    @Request() req: any,
   ) {
     return this.configService.update(key, updateConfigDto, req.user.userId);
   }

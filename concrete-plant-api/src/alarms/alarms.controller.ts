@@ -3,7 +3,7 @@ import { AlarmsService } from './alarms.service';
 import { CreateAlarmDto } from './dto/create-alarm.dto';
 import { UpdateAlarmDto } from './dto/update-alarm.dto';
 import { QueryAlarmDto } from './dto/query-alarm.dto';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 
 @Controller('alarms')
@@ -13,7 +13,7 @@ export class AlarmsController {
 
   @Post()
   @Roles('admin', 'manager')
-  create(@Body() createAlarmDto: CreateAlarmDto, @Request() req) {
+  create(@Body() createAlarmDto: CreateAlarmDto, @Request() req: any) {
     return this.alarmsService.create(createAlarmDto, req.user.userId);
   }
 
@@ -57,7 +57,7 @@ export class AlarmsController {
   batchAcknowledge(
     @Body('ids') ids: number[],
     @Body('remarks') remarks: string,
-    @Request() req,
+    @Request() req: any,
   ) {
     return this.alarmsService.batchAcknowledge(ids, req.user.userId, remarks);
   }
@@ -67,7 +67,7 @@ export class AlarmsController {
   batchResolve(
     @Body('ids') ids: number[],
     @Body('solution') solution: string,
-    @Request() req,
+    @Request() req: any,
   ) {
     return this.alarmsService.batchResolve(ids, req.user.userId, solution);
   }
@@ -79,7 +79,7 @@ export class AlarmsController {
 
   @Patch(':id')
   @Roles('admin', 'manager')
-  update(@Param('id') id: string, @Body() updateAlarmDto: UpdateAlarmDto, @Request() req) {
+  update(@Param('id') id: string, @Body() updateAlarmDto: UpdateAlarmDto, @Request() req: any) {
     return this.alarmsService.update(+id, updateAlarmDto, req.user.userId);
   }
 
@@ -88,7 +88,7 @@ export class AlarmsController {
   acknowledge(
     @Param('id') id: string,
     @Body('remarks') remarks: string,
-    @Request() req,
+    @Request() req: any,
   ) {
     return this.alarmsService.acknowledge(+id, req.user.userId, remarks);
   }
@@ -98,7 +98,7 @@ export class AlarmsController {
   resolve(
     @Param('id') id: string,
     @Body('solution') solution: string,
-    @Request() req,
+    @Request() req: any,
   ) {
     return this.alarmsService.resolve(+id, req.user.userId, solution);
   }
@@ -108,7 +108,7 @@ export class AlarmsController {
   ignore(
     @Param('id') id: string,
     @Body('reason') reason: string,
-    @Request() req,
+    @Request() req: any,
   ) {
     return this.alarmsService.ignore(+id, req.user.userId, reason);
   }

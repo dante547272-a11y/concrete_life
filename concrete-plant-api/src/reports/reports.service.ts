@@ -18,14 +18,14 @@ export class ReportsService {
     const endOfDay = new Date(targetDate.setHours(23, 59, 59, 999));
 
     const where: any = {
-      created_at: {
+      createdAt: {
         gte: startOfDay,
         lte: endOfDay,
       },
     };
 
     if (siteId) {
-      where.site_id = siteId;
+      where.siteId = siteId;
     }
 
     const [
@@ -56,21 +56,21 @@ export class ReportsService {
       }),
       
       // 任务统计
-      this.prisma.tasks.groupBy({
+      this.prisma.task.groupBy({
         by: ['status'],
         where,
         _count: true,
       }),
       
       // 告警统计
-      this.prisma.alarms.groupBy({
+      this.prisma.alarm.groupBy({
         by: ['level'],
         where: {
           triggered_at: {
             gte: startOfDay,
             lte: endOfDay,
           },
-          ...(siteId ? { site_id: siteId } : {}),
+          ...(siteId ? { siteId: siteId } : {}),
         },
         _count: true,
       }),
@@ -78,7 +78,7 @@ export class ReportsService {
       // 总产量
       this.prisma.production_batches.aggregate({
         where: { ...where, status: 'completed' },
-        _sum: { actual_quantity: true },
+        _sum: { actualQuantity: true },
         _count: true,
       }),
       
@@ -87,12 +87,12 @@ export class ReportsService {
         SELECT 
           m.name,
           m.unit,
-          SUM(br.actual_quantity) as consumption
+          SUM(br.actualQuantity) as consumption
         FROM batch_records br
-        JOIN materials m ON br.material_id = m.id
-        JOIN production_batches pb ON br.batch_id = pb.id
-        WHERE pb.created_at BETWEEN ${startOfDay} AND ${endOfDay}
-        ${siteId ? this.prisma.$queryRaw`AND pb.site_id = ${siteId}` : this.prisma.$queryRaw``}
+        JOIN materials m ON br.materialId = m.id
+        JOIN production_batches pb ON br.batchId = pb.id
+        WHERE pb.createdAt BETWEEN ${startOfDay} AND ${endOfDay}
+        ${siteId ? this.prisma.$queryRaw`AND pb.siteId = ${siteId}` : this.prisma.$queryRaw``}
         GROUP BY m.id, m.name, m.unit
         ORDER BY consumption DESC
       `,
@@ -109,7 +109,7 @@ export class ReportsService {
         },
         production: {
           totalBatches: production._count,
-          totalProduction: production._sum.actual_quantity || 0,
+          totalProduction: production._sum.actualQuantity || 0,
           batches,
         },
         tasks: {
@@ -147,14 +147,14 @@ export class ReportsService {
     // 按天统计
     const dailyStats = await this.prisma.$queryRaw`
       SELECT 
-        DATE(created_at) as date,
+        DATE(createdAt) as date,
         COUNT(*) as batch_count,
-        SUM(actual_quantity) as production
+        SUM(actualQuantity) as production
       FROM production_batches
       WHERE status = 'completed'
-        AND created_at BETWEEN ${startDate} AND ${endDate}
-        ${siteId ? this.prisma.$queryRaw`AND site_id = ${siteId}` : this.prisma.$queryRaw``}
-      GROUP BY DATE(created_at)
+        AND createdAt BETWEEN ${startDate} AND ${endDate}
+        ${siteId ? this.prisma.$queryRaw`AND siteId = ${siteId}` : this.prisma.$queryRaw``}
+      GROUP BY DATE(createdAt)
       ORDER BY date
     `;
 
@@ -186,14 +186,14 @@ export class ReportsService {
     // 按月统计
     const monthlyStats = await this.prisma.$queryRaw`
       SELECT 
-        MONTH(created_at) as month,
+        MONTH(createdAt) as month,
         COUNT(*) as batch_count,
-        SUM(actual_quantity) as production
+        SUM(actualQuantity) as production
       FROM production_batches
       WHERE status = 'completed'
-        AND YEAR(created_at) = ${targetYear}
-        ${siteId ? this.prisma.$queryRaw`AND site_id = ${siteId}` : this.prisma.$queryRaw``}
-      GROUP BY MONTH(created_at)
+        AND YEAR(createdAt) = ${targetYear}
+        ${siteId ? this.prisma.$queryRaw`AND siteId = ${siteId}` : this.prisma.$queryRaw``}
+      GROUP BY MONTH(createdAt)
       ORDER BY month
     `;
 

@@ -15,7 +15,7 @@ export class UsersService {
     const { username, password, name, email, phone, userType, siteId, roleId, department, position } = createUserDto;
 
     // 检查用户名是否已存在
-    const existingUser = await this.prisma.users.findUnique({
+    const existingUser = await this.prisma.user.findUnique({
       where: { username },
     });
 
@@ -27,16 +27,16 @@ export class UsersService {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // 创建用户
-    const user = await this.prisma.users.create({
+    const user = await this.prisma.user.create({
       data: {
         username,
-        password_hash: hashedPassword,
+        passwordHash: hashedPassword,
         name,
         email,
         phone,
-        user_type: userType as any,
-        site_id: siteId,
-        role_id: roleId,
+        userType: userType as any,
+        siteId: siteId,
+        roleId: roleId,
         department,
         position,
         status: 'active',
@@ -48,7 +48,7 @@ export class UsersService {
     });
 
     // 不返回密码哈希
-    const { password_hash, ...result } = user;
+    const { passwordHash, ...result } = user;
     return result;
   }
 
@@ -59,12 +59,12 @@ export class UsersService {
     const skip = (page - 1) * limit;
 
     const where: any = {};
-    if (siteId) where.site_id = siteId;
-    if (userType) where.user_type = userType;
+    if (siteId) where.siteId = siteId;
+    if (userType) where.userType = userType;
     if (status) where.status = status;
 
     const [users, total] = await Promise.all([
-      this.prisma.users.findMany({
+      this.prisma.user.findMany({
         where,
         skip,
         take: limit,
@@ -73,14 +73,14 @@ export class UsersService {
           site: true,
         },
         orderBy: {
-          created_at: 'desc',
+          createdAt: 'desc',
         },
       }),
-      this.prisma.users.count({ where }),
+      this.prisma.user.count({ where }),
     ]);
 
     // 不返回密码哈希
-    const usersWithoutPassword = users.map(({ password_hash, ...user }) => user);
+    const usersWithoutPassword = users.map(({ passwordHash, ...user }) => user);
 
     return {
       data: usersWithoutPassword,
@@ -95,7 +95,7 @@ export class UsersService {
    * 查询单个用户
    */
   async findOne(id: number) {
-    const user = await this.prisma.users.findUnique({
+    const user = await this.prisma.user.findUnique({
       where: { id },
       include: {
         role: true,
@@ -108,7 +108,7 @@ export class UsersService {
     }
 
     // 不返回密码哈希
-    const { password_hash, ...result } = user;
+    const { passwordHash, ...result } = user;
     return result;
   }
 
@@ -116,7 +116,7 @@ export class UsersService {
    * 更新用户
    */
   async update(id: number, updateUserDto: UpdateUserDto) {
-    const user = await this.prisma.users.findUnique({
+    const user = await this.prisma.user.findUnique({
       where: { id },
     });
 
@@ -126,7 +126,7 @@ export class UsersService {
 
     // 如果要更新用户名，检查是否已存在
     if (updateUserDto.username && updateUserDto.username !== user.username) {
-      const existingUser = await this.prisma.users.findUnique({
+      const existingUser = await this.prisma.user.findUnique({
         where: { username: updateUserDto.username },
       });
 
@@ -141,17 +141,17 @@ export class UsersService {
       passwordHash = await bcrypt.hash(updateUserDto.password, 10);
     }
 
-    const updatedUser = await this.prisma.users.update({
+    const updatedUser = await this.prisma.user.update({
       where: { id },
       data: {
         username: updateUserDto.username,
-        password_hash: passwordHash,
+        passwordHash: passwordHash,
         name: updateUserDto.name,
         email: updateUserDto.email,
         phone: updateUserDto.phone,
-        user_type: updateUserDto.userType as any,
-        site_id: updateUserDto.siteId,
-        role_id: updateUserDto.roleId,
+        userType: updateUserDto.userType as any,
+        siteId: updateUserDto.siteId,
+        roleId: updateUserDto.roleId,
         department: updateUserDto.department,
         position: updateUserDto.position,
         avatar: updateUserDto.avatar,
@@ -164,7 +164,7 @@ export class UsersService {
     });
 
     // 不返回密码哈希
-    const { password_hash, ...result } = updatedUser;
+    const { passwordHash, ...result } = updatedUser;
     return result;
   }
 
@@ -172,7 +172,7 @@ export class UsersService {
    * 删除用户（软删除）
    */
   async remove(id: number) {
-    const user = await this.prisma.users.findUnique({
+    const user = await this.prisma.user.findUnique({
       where: { id },
     });
 
@@ -180,11 +180,11 @@ export class UsersService {
       throw new NotFoundException('用户不存在');
     }
 
-    await this.prisma.users.update({
+    await this.prisma.user.update({
       where: { id },
       data: {
         status: 'inactive',
-        deleted_at: new Date(),
+        deletedAt: new Date(),
       },
     });
 
@@ -195,7 +195,7 @@ export class UsersService {
    * 启用/禁用用户
    */
   async toggleStatus(id: number) {
-    const user = await this.prisma.users.findUnique({
+    const user = await this.prisma.user.findUnique({
       where: { id },
     });
 
@@ -205,7 +205,7 @@ export class UsersService {
 
     const newStatus = user.status === 'active' ? 'inactive' : 'active';
 
-    await this.prisma.users.update({
+    await this.prisma.user.update({
       where: { id },
       data: { status: newStatus },
     });

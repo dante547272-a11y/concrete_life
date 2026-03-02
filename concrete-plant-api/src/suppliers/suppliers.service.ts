@@ -54,7 +54,7 @@ export class SuppliersService {
    * 查询供应商列表
    */
   async findAll(query: QuerySupplierDto) {
-    const { page = 1, limit = 10, sortBy = 'created_at', sortOrder = 'desc', ...filters } = query;
+    const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc', ...filters } = query;
     const skip = (page - 1) * limit;
 
     // 构建查询条件
@@ -175,7 +175,7 @@ export class SuppliersService {
         type: updateSupplierDto.type as any,
         credit_rating: updateSupplierDto.creditRating,
         remarks: updateSupplierDto.remarks,
-        updated_at: new Date(),
+        updatedAt: new Date(),
       },
     });
 
@@ -209,7 +209,7 @@ export class SuppliersService {
     await this.prisma.suppliers.update({
       where: { id },
       data: {
-        deleted_at: new Date(),
+        deletedAt: new Date(),
       },
     });
 

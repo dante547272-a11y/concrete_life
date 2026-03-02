@@ -8,8 +8,6 @@ import {
   MessageBody,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { UseGuards } from '@nestjs/common';
-import { WsJwtGuard } from './guards/ws-jwt.guard';
 
 @WebSocketGateway({
   cors: {
@@ -20,7 +18,7 @@ import { WsJwtGuard } from './guards/ws-jwt.guard';
 })
 export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
-  server: Server;
+  server!: Server;
 
   private connectedClients: Map<string, { socket: Socket; userId: number; siteId?: number }> = new Map();
 
@@ -125,8 +123,8 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.server.to('alarms').emit('alarm:new', alarm);
     
     // 如果告警关联了站点，也推送到站点频道
-    if (alarm.site_id) {
-      this.server.to(`site:${alarm.site_id}`).emit('alarm:new', alarm);
+    if (alarm.siteId) {
+      this.server.to(`site:${alarm.siteId}`).emit('alarm:new', alarm);
     }
   }
 
@@ -136,8 +134,8 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   sendAlarmUpdate(alarm: any) {
     this.server.to('alarms').emit('alarm:update', alarm);
     
-    if (alarm.site_id) {
-      this.server.to(`site:${alarm.site_id}`).emit('alarm:update', alarm);
+    if (alarm.siteId) {
+      this.server.to(`site:${alarm.siteId}`).emit('alarm:update', alarm);
     }
   }
 

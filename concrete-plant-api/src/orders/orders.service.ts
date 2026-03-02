@@ -18,7 +18,7 @@ export class OrdersService {
     const existingOrder = await this.prisma.orders.findFirst({
       where: {
         order_no: createOrderDto.orderNo,
-        site_id: createOrderDto.siteId,
+        siteId: createOrderDto.siteId,
       },
     });
 
@@ -27,7 +27,7 @@ export class OrdersService {
     }
 
     // 检查站点是否存在
-    const site = await this.prisma.sites.findUnique({
+    const site = await this.prisma.site.findUnique({
       where: { id: createOrderDto.siteId },
     });
 
@@ -51,23 +51,23 @@ export class OrdersService {
     const order = await this.prisma.orders.create({
       data: {
         order_no: orderData.orderNo,
-        site_id: orderData.siteId,
-        customer_name: orderData.customerName,
-        customer_phone: orderData.customerPhone,
+        siteId: orderData.siteId,
+        customerName: orderData.customerName,
+        customerPhone: orderData.customerPhone,
         project_name: orderData.projectName,
         construction_site: orderData.constructionSite,
-        required_delivery_time: new Date(orderData.requiredDeliveryTime),
-        total_volume: orderData.totalVolume,
+        required_deliveryTime: new Date(orderData.requiredDeliveryTime),
+        totalVolume: orderData.totalVolume,
         total_amount: orderData.totalAmount,
         status: (orderData.status as any) || 'pending',
         remarks: orderData.remarks,
         created_by: userId,
         order_items: items && items.length > 0 ? {
           create: items.map(item => ({
-            recipe_id: item.recipeId,
+            recipeId: item.recipeId,
             volume: item.volume,
-            unit_price: item.unitPrice,
-            total_price: item.volume * item.unitPrice,
+            unitPrice: item.unitPrice,
+            totalPrice: item.volume * item.unitPrice,
             remarks: item.remarks,
           })),
         } : undefined,
@@ -100,14 +100,14 @@ export class OrdersService {
    * 查询订单列表
    */
   async findAll(query: QueryOrderDto) {
-    const { page = 1, limit = 10, sortBy = 'created_at', sortOrder = 'desc', ...filters } = query;
+    const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc', ...filters } = query;
     const skip = (page - 1) * limit;
 
     // 构建查询条件
     const where: any = {};
 
     if (filters.siteId) {
-      where.site_id = filters.siteId;
+      where.siteId = filters.siteId;
     }
 
     if (filters.orderNo) {
@@ -115,7 +115,7 @@ export class OrdersService {
     }
 
     if (filters.customerName) {
-      where.customer_name = { contains: filters.customerName };
+      where.customerName = { contains: filters.customerName };
     }
 
     if (filters.projectName) {
@@ -127,12 +127,12 @@ export class OrdersService {
     }
 
     if (filters.startDate || filters.endDate) {
-      where.created_at = {};
+      where.createdAt = {};
       if (filters.startDate) {
-        where.created_at.gte = new Date(filters.startDate);
+        where.createdAt.gte = new Date(filters.startDate);
       }
       if (filters.endDate) {
-        where.created_at.lte = new Date(filters.endDate);
+        where.createdAt.lte = new Date(filters.endDate);
       }
     }
 
@@ -247,7 +247,7 @@ export class OrdersService {
       const existingOrder = await this.prisma.orders.findFirst({
         where: {
           order_no: orderData.orderNo,
-          site_id: order.site_id,
+          siteId: order.siteId,
           id: { not: id },
         },
       });
@@ -262,16 +262,16 @@ export class OrdersService {
       where: { id },
       data: {
         order_no: orderData.orderNo,
-        customer_name: orderData.customerName,
-        customer_phone: orderData.customerPhone,
+        customerName: orderData.customerName,
+        customerPhone: orderData.customerPhone,
         project_name: orderData.projectName,
         construction_site: orderData.constructionSite,
-        required_delivery_time: orderData.requiredDeliveryTime ? new Date(orderData.requiredDeliveryTime) : undefined,
-        total_volume: orderData.totalVolume,
+        required_deliveryTime: orderData.requiredDeliveryTime ? new Date(orderData.requiredDeliveryTime) : undefined,
+        totalVolume: orderData.totalVolume,
         total_amount: orderData.totalAmount,
         status: orderData.status as any,
         remarks: orderData.remarks,
-        updated_at: new Date(),
+        updatedAt: new Date(),
       },
       include: {
         order_items: {
@@ -298,17 +298,17 @@ export class OrdersService {
     if (items && items.length > 0) {
       // 删除旧的明细
       await this.prisma.order_items.deleteMany({
-        where: { order_id: id },
+        where: { orderId: id },
       });
 
       // 创建新的明细
       await this.prisma.order_items.createMany({
         data: items.map(item => ({
-          order_id: id,
-          recipe_id: item.recipeId,
+          orderId: id,
+          recipeId: item.recipeId,
           volume: item.volume,
-          unit_price: item.unitPrice,
-          total_price: item.volume * item.unitPrice,
+          unitPrice: item.unitPrice,
+          totalPrice: item.volume * item.unitPrice,
           remarks: item.remarks,
         })),
       });
@@ -337,7 +337,7 @@ export class OrdersService {
     await this.prisma.orders.update({
       where: { id },
       data: {
-        deleted_at: new Date(),
+        deletedAt: new Date(),
       },
     });
 
@@ -373,7 +373,7 @@ export class OrdersService {
       where: { id },
       data: {
         status: status as any,
-        updated_at: new Date(),
+        updatedAt: new Date(),
       },
       include: {
         order_items: {
@@ -399,16 +399,16 @@ export class OrdersService {
     const where: any = {};
 
     if (siteId) {
-      where.site_id = siteId;
+      where.siteId = siteId;
     }
 
     if (startDate || endDate) {
-      where.created_at = {};
+      where.createdAt = {};
       if (startDate) {
-        where.created_at.gte = new Date(startDate);
+        where.createdAt.gte = new Date(startDate);
       }
       if (endDate) {
-        where.created_at.lte = new Date(endDate);
+        where.createdAt.lte = new Date(endDate);
       }
     }
 
@@ -430,7 +430,7 @@ export class OrdersService {
       this.prisma.orders.count({ where: { ...where, status: 'cancelled' } }),
       this.prisma.orders.aggregate({
         where,
-        _sum: { total_volume: true },
+        _sum: { totalVolume: true },
       }),
       this.prisma.orders.aggregate({
         where,
@@ -447,7 +447,7 @@ export class OrdersService {
         completed: completedOrders,
         cancelled: cancelledOrders,
       },
-      totalVolume: totalVolume._sum.total_volume || 0,
+      totalVolume: totalVolume._sum.totalVolume || 0,
       totalAmount: totalAmount._sum.total_amount || 0,
     };
   }

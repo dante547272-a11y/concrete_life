@@ -100,7 +100,7 @@ export class ConfigService {
           : undefined,
         description: updateConfigDto.description,
         is_public: updateConfigDto.isPublic,
-        updated_at: new Date(),
+        updatedAt: new Date(),
       },
     });
 

@@ -15,16 +15,24 @@ describe('DashboardService', () => {
     production_batches: {
       count: jest.fn(),
       aggregate: jest.fn(),
+      findMany: jest.fn(),
     },
     materials: {
       count: jest.fn(),
       findMany: jest.fn(),
+      fields: {
+        min_stock: 'min_stock',
+      },
     },
     alarms: {
       count: jest.fn(),
     },
     vehicles: {
       count: jest.fn(),
+    },
+    tasks: {
+      count: jest.fn(),
+      findMany: jest.fn(),
     },
   };
 
@@ -68,7 +76,10 @@ describe('DashboardService', () => {
         _sum: { actual_quantity: 1000 },
       });
 
-      mockPrismaService.materials.count.mockResolvedValue(50);
+      mockPrismaService.materials.count
+        .mockResolvedValueOnce(50)  // totalMaterials
+        .mockResolvedValueOnce(3);  // lowStockMaterials
+
       mockPrismaService.materials.findMany.mockResolvedValue([
         { id: 1, current_stock: 500, min_stock: 1000 },
       ]);
@@ -80,6 +91,14 @@ describe('DashboardService', () => {
       mockPrismaService.vehicles.count
         .mockResolvedValueOnce(10)  // totalVehicles
         .mockResolvedValueOnce(8);  // activeVehicles
+
+      mockPrismaService.tasks.count
+        .mockResolvedValueOnce(30)  // totalTasks
+        .mockResolvedValueOnce(10); // pendingTasks
+
+      mockPrismaService.orders.findMany.mockResolvedValue([]);
+      mockPrismaService.production_batches.findMany.mockResolvedValue([]);
+      mockPrismaService.tasks.findMany.mockResolvedValue([]);
 
       const result = await service.getOverview();
 

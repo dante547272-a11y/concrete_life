@@ -19,7 +19,7 @@ export class AuthService {
     const { username, password } = loginDto;
 
     // 查找用户
-    const user = await this.prisma.users.findUnique({
+    const user = await this.prisma.user.findUnique({
       where: { username },
       include: {
         role: true,
@@ -37,7 +37,7 @@ export class AuthService {
     }
 
     // 验证密码
-    const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+    const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
     if (!isPasswordValid) {
       throw new UnauthorizedException('用户名或密码错误');
     }
@@ -46,8 +46,8 @@ export class AuthService {
     const payload = {
       sub: user.id,
       username: user.username,
-      userType: user.user_type,
-      siteId: user.site_id,
+      userType: user.userType,
+      siteId: user.siteId,
     };
 
     const accessToken = this.jwtService.sign(payload);
@@ -63,12 +63,12 @@ export class AuthService {
         name: user.name,
         email: user.email,
         phone: user.phone,
-        userType: user.user_type,
+        userType: user.userType,
         department: user.department,
         position: user.position,
         avatar: user.avatar,
-        siteId: user.site_id,
-        roleId: user.role_id,
+        siteId: user.siteId,
+        roleId: user.roleId,
         role: user.role,
         site: user.site,
       },
@@ -82,7 +82,7 @@ export class AuthService {
     const { username, password, name, email, phone, userType, siteId, roleId } = registerDto;
 
     // 检查用户名是否已存在
-    const existingUser = await this.prisma.users.findUnique({
+    const existingUser = await this.prisma.user.findUnique({
       where: { username },
     });
 
@@ -91,7 +91,7 @@ export class AuthService {
     }
 
     // 检查站点是否存在
-    const site = await this.prisma.sites.findUnique({
+    const site = await this.prisma.site.findUnique({
       where: { id: siteId },
     });
 
@@ -114,16 +114,16 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // 创建用户
-    const user = await this.prisma.users.create({
+    const user = await this.prisma.user.create({
       data: {
         username,
-        password_hash: hashedPassword,
+        passwordHash: hashedPassword,
         name,
         email,
         phone,
-        user_type: userType as any,
-        site_id: siteId,
-        role_id: roleId,
+        userType: userType as any,
+        siteId: siteId,
+        roleId: roleId,
         status: 'active',
       },
       include: {
@@ -136,8 +136,8 @@ export class AuthService {
     const payload = {
       sub: user.id,
       username: user.username,
-      userType: user.user_type,
-      siteId: user.site_id,
+      userType: user.userType,
+      siteId: user.siteId,
     };
 
     const accessToken = this.jwtService.sign(payload);
@@ -150,9 +150,9 @@ export class AuthService {
         name: user.name,
         email: user.email,
         phone: user.phone,
-        userType: user.user_type,
-        siteId: user.site_id,
-        roleId: user.role_id,
+        userType: user.userType,
+        siteId: user.siteId,
+        roleId: user.roleId,
         role: user.role,
         site: user.site,
       },
@@ -165,7 +165,7 @@ export class AuthService {
   async validateToken(token: string) {
     try {
       const payload = this.jwtService.verify(token);
-      const user = await this.prisma.users.findUnique({
+      const user = await this.prisma.user.findUnique({
         where: { id: payload.sub },
         include: {
           role: true,
@@ -181,9 +181,9 @@ export class AuthService {
         id: user.id,
         username: user.username,
         name: user.name,
-        userType: user.user_type,
-        siteId: user.site_id,
-        roleId: user.role_id,
+        userType: user.userType,
+        siteId: user.siteId,
+        roleId: user.roleId,
         role: user.role,
         site: user.site,
       };
@@ -196,7 +196,7 @@ export class AuthService {
    * 修改密码
    */
   async changePassword(userId: number, oldPassword: string, newPassword: string) {
-    const user = await this.prisma.users.findUnique({
+    const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
 
@@ -205,7 +205,7 @@ export class AuthService {
     }
 
     // 验证旧密码
-    const isPasswordValid = await bcrypt.compare(oldPassword, user.password_hash);
+    const isPasswordValid = await bcrypt.compare(oldPassword, user.passwordHash);
     if (!isPasswordValid) {
       throw new UnauthorizedException('原密码错误');
     }
@@ -214,9 +214,9 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     // 更新密码
-    await this.prisma.users.update({
+    await this.prisma.user.update({
       where: { id: userId },
-      data: { password_hash: hashedPassword },
+      data: { passwordHash: hashedPassword },
     });
 
     return { message: '密码修改成功' };
@@ -235,7 +235,7 @@ export class AuthService {
           target: 'system',
           detail: `用户登录${result === 'success' ? '成功' : '失败'}`,
           result: result,
-          site_id: 1, // 默认站点，实际应该从用户信息获取
+          siteId: 1, // 默认站点，实际应该从用户信息获取
         },
       });
     } catch (error) {

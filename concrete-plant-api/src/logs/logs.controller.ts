@@ -1,7 +1,7 @@
 import { Controller, Get, Param, Query, Delete, UseGuards } from '@nestjs/common';
 import { LogsService } from './logs.service';
 import { QueryLogDto } from './dto/query-log.dto';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 
 @Controller('logs')

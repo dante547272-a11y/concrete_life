@@ -11,7 +11,7 @@ export class DashboardService {
   async getOverview(siteId?: number) {
     const where: any = {};
     if (siteId) {
-      where.site_id = siteId;
+      where.siteId = siteId;
     }
 
     // 获取今日日期范围
@@ -62,7 +62,7 @@ export class DashboardService {
       this.prisma.orders.count({
         where: {
           ...where,
-          created_at: { gte: startOfDay, lte: endOfDay },
+          createdAt: { gte: startOfDay, lte: endOfDay },
         },
       }),
       this.prisma.orders.count({
@@ -77,7 +77,7 @@ export class DashboardService {
       this.prisma.production_batches.count({
         where: {
           ...where,
-          created_at: { gte: startOfDay, lte: endOfDay },
+          createdAt: { gte: startOfDay, lte: endOfDay },
         },
       }),
       this.prisma.production_batches.count({
@@ -87,20 +87,20 @@ export class DashboardService {
         where: {
           ...where,
           status: 'completed',
-          created_at: { gte: startOfDay, lte: endOfDay },
+          createdAt: { gte: startOfDay, lte: endOfDay },
         },
-        _sum: { actual_quantity: true },
+        _sum: { actualQuantity: true },
       }),
       
       // 任务统计
-      this.prisma.tasks.count({ where }),
-      this.prisma.tasks.count({
+      this.prisma.task.count({ where }),
+      this.prisma.task.count({
         where: { ...where, status: 'pending' },
       }),
-      this.prisma.tasks.count({
+      this.prisma.task.count({
         where: { ...where, status: 'in_progress' },
       }),
-      this.prisma.tasks.count({
+      this.prisma.task.count({
         where: { ...where, status: 'completed' },
       }),
       
@@ -114,11 +114,11 @@ export class DashboardService {
       }),
       
       // 材料统计
-      this.prisma.materials.count({ where }),
-      this.prisma.materials.count({
+      this.prisma.material.count({ where }),
+      this.prisma.material.count({
         where: {
           ...where,
-          current_stock: { lte: this.prisma.materials.fields.min_stock },
+          currentStock: { lte: this.prisma.material.fields.minStock },
         },
       }),
       
@@ -126,7 +126,7 @@ export class DashboardService {
       this.prisma.orders.findMany({
         where,
         take: 5,
-        orderBy: { created_at: 'desc' },
+        orderBy: { createdAt: 'desc' },
         include: {
           customer: true,
           site: true,
@@ -137,7 +137,7 @@ export class DashboardService {
       this.prisma.production_batches.findMany({
         where,
         take: 5,
-        orderBy: { created_at: 'desc' },
+        orderBy: { createdAt: 'desc' },
         include: {
           order: true,
           recipe: true,
@@ -146,10 +146,10 @@ export class DashboardService {
       }),
       
       // 最近任务（前5条）
-      this.prisma.tasks.findMany({
+      this.prisma.task.findMany({
         where,
         take: 5,
-        orderBy: { created_at: 'desc' },
+        orderBy: { createdAt: 'desc' },
         include: {
           order: true,
           vehicle: true,
@@ -176,7 +176,7 @@ export class DashboardService {
         totalBatches,
         todayBatches,
         inProgressBatches,
-        todayProduction: todayProduction._sum.actual_quantity || 0,
+        todayProduction: todayProduction._sum.actualQuantity || 0,
         recent: recentBatches,
       },
       tasks: {
@@ -204,7 +204,7 @@ export class DashboardService {
   async getProductionTrend(siteId?: number, days: number = 7) {
     const where: any = {};
     if (siteId) {
-      where.site_id = siteId;
+      where.siteId = siteId;
     }
 
     const result = [];
@@ -220,23 +220,23 @@ export class DashboardService {
         this.prisma.production_batches.count({
           where: {
             ...where,
-            created_at: { gte: startOfDay, lte: endOfDay },
+            createdAt: { gte: startOfDay, lte: endOfDay },
           },
         }),
         this.prisma.production_batches.aggregate({
           where: {
             ...where,
             status: 'completed',
-            created_at: { gte: startOfDay, lte: endOfDay },
+            createdAt: { gte: startOfDay, lte: endOfDay },
           },
-          _sum: { actual_quantity: true },
+          _sum: { actualQuantity: true },
         }),
       ]);
 
       result.push({
         date: startOfDay.toISOString().split('T')[0],
         batches: batchCount,
-        production: production._sum.actual_quantity || 0,
+        production: production._sum.actualQuantity || 0,
       });
     }
 
@@ -249,7 +249,7 @@ export class DashboardService {
   async getOrderTrend(siteId?: number, days: number = 7) {
     const where: any = {};
     if (siteId) {
-      where.site_id = siteId;
+      where.siteId = siteId;
     }
 
     const result = [];
@@ -264,7 +264,7 @@ export class DashboardService {
       const orderCount = await this.prisma.orders.count({
         where: {
           ...where,
-          created_at: { gte: startOfDay, lte: endOfDay },
+          createdAt: { gte: startOfDay, lte: endOfDay },
         },
       });
 
@@ -283,7 +283,7 @@ export class DashboardService {
   async getOrderStatusDistribution(siteId?: number) {
     const where: any = {};
     if (siteId) {
-      where.site_id = siteId;
+      where.siteId = siteId;
     }
 
     const [pending, confirmed, in_production, completed, cancelled] = await Promise.all([
@@ -309,17 +309,17 @@ export class DashboardService {
   async getTaskStatusDistribution(siteId?: number) {
     const where: any = {};
     if (siteId) {
-      where.site_id = siteId;
+      where.siteId = siteId;
     }
 
     const [pending, assigned, in_progress, loading, transporting, unloading, completed] = await Promise.all([
-      this.prisma.tasks.count({ where: { ...where, status: 'pending' } }),
-      this.prisma.tasks.count({ where: { ...where, status: 'assigned' } }),
-      this.prisma.tasks.count({ where: { ...where, status: 'in_progress' } }),
-      this.prisma.tasks.count({ where: { ...where, status: 'loading' } }),
-      this.prisma.tasks.count({ where: { ...where, status: 'transporting' } }),
-      this.prisma.tasks.count({ where: { ...where, status: 'unloading' } }),
-      this.prisma.tasks.count({ where: { ...where, status: 'completed' } }),
+      this.prisma.task.count({ where: { ...where, status: 'pending' } }),
+      this.prisma.task.count({ where: { ...where, status: 'assigned' } }),
+      this.prisma.task.count({ where: { ...where, status: 'in_progress' } }),
+      this.prisma.task.count({ where: { ...where, status: 'loading' } }),
+      this.prisma.task.count({ where: { ...where, status: 'transporting' } }),
+      this.prisma.task.count({ where: { ...where, status: 'unloading' } }),
+      this.prisma.task.count({ where: { ...where, status: 'completed' } }),
     ]);
 
     return [
@@ -339,7 +339,7 @@ export class DashboardService {
   async getVehicleUtilization(siteId?: number) {
     const where: any = {};
     if (siteId) {
-      where.site_id = siteId;
+      where.siteId = siteId;
     }
 
     const [total, available, in_use, maintenance, fault] = await Promise.all([
@@ -367,29 +367,29 @@ export class DashboardService {
   async getLowStockMaterials(siteId?: number) {
     const where: any = {};
     if (siteId) {
-      where.site_id = siteId;
+      where.siteId = siteId;
     }
 
     // 查询库存低于最小库存的材料
-    const materials = await this.prisma.materials.findMany({
+    const materials = await this.prisma.material.findMany({
       where: {
         ...where,
-        current_stock: {
-          lte: this.prisma.materials.fields.min_stock,
+        currentStock: {
+          lte: this.prisma.material.fields.minStock,
         },
       },
       orderBy: {
-        current_stock: 'asc',
+        currentStock: 'asc',
       },
       take: 10,
     });
 
     return materials.map(material => ({
       ...material,
-      stockRate: material.min_stock > 0 
-        ? ((material.current_stock / material.min_stock) * 100).toFixed(2)
+      stockRate: material.minStock > 0 
+        ? ((material.currentStock / material.minStock) * 100).toFixed(2)
         : '0.00',
-      shortage: Math.max(0, material.min_stock - material.current_stock),
+      shortage: Math.max(0, material.minStock - material.currentStock),
     }));
   }
 
@@ -399,7 +399,7 @@ export class DashboardService {
   async getRealTimeData(siteId?: number) {
     const where: any = {};
     if (siteId) {
-      where.site_id = siteId;
+      where.siteId = siteId;
     }
 
     const [
@@ -413,10 +413,10 @@ export class DashboardService {
           order: true,
           recipe: true,
         },
-        orderBy: { start_time: 'desc' },
+        orderBy: { startTime: 'desc' },
         take: 5,
       }),
-      this.prisma.tasks.findMany({
+      this.prisma.task.findMany({
         where: { ...where, status: 'in_progress' },
         include: {
           order: true,
@@ -429,7 +429,7 @@ export class DashboardService {
             },
           },
         },
-        orderBy: { updated_at: 'desc' },
+        orderBy: { updatedAt: 'desc' },
         take: 5,
       }),
       this.prisma.vehicles.findMany({
@@ -438,7 +438,7 @@ export class DashboardService {
           tasks: {
             where: { status: 'in_progress' },
             take: 1,
-            orderBy: { updated_at: 'desc' },
+            orderBy: { updatedAt: 'desc' },
           },
         },
       }),
@@ -464,14 +464,14 @@ export class DashboardService {
     const endDate = new Date(targetYear, targetMonth, 0, 23, 59, 59, 999);
 
     const where: any = {
-      created_at: {
+      createdAt: {
         gte: startDate,
         lte: endDate,
       },
     };
 
     if (siteId) {
-      where.site_id = siteId;
+      where.siteId = siteId;
     }
 
     const [
@@ -485,10 +485,10 @@ export class DashboardService {
       this.prisma.production_batches.count({ where }),
       this.prisma.production_batches.aggregate({
         where: { ...where, status: 'completed' },
-        _sum: { actual_quantity: true },
+        _sum: { actualQuantity: true },
       }),
-      this.prisma.tasks.count({ where }),
-      this.prisma.tasks.count({ where: { ...where, status: 'completed' } }),
+      this.prisma.task.count({ where }),
+      this.prisma.task.count({ where: { ...where, status: 'completed' } }),
     ]);
 
     return {
@@ -496,7 +496,7 @@ export class DashboardService {
       month: targetMonth,
       orders: orderCount,
       batches: batchCount,
-      production: totalProduction._sum.actual_quantity || 0,
+      production: totalProduction._sum.actualQuantity || 0,
       tasks: taskCount,
       completedTasks: completedTaskCount,
       taskCompletionRate: taskCount > 0 

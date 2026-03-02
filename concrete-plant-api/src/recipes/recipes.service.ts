@@ -16,7 +16,7 @@ export class RecipesService {
     const existingRecipe = await this.prisma.recipes.findFirst({
       where: {
         name: createRecipeDto.name,
-        site_id: createRecipeDto.siteId,
+        siteId: createRecipeDto.siteId,
       },
     });
 
@@ -25,7 +25,7 @@ export class RecipesService {
     }
 
     // 检查站点是否存在
-    const site = await this.prisma.sites.findUnique({
+    const site = await this.prisma.site.findUnique({
       where: { id: createRecipeDto.siteId },
     });
 
@@ -47,7 +47,7 @@ export class RecipesService {
     // 验证配方明细中的材料是否存在
     if (createRecipeDto.details && createRecipeDto.details.length > 0) {
       const materialIds = createRecipeDto.details.map(d => d.materialId);
-      const materials = await this.prisma.materials.findMany({
+      const materials = await this.prisma.material.findMany({
         where: { id: { in: materialIds } },
       });
 
@@ -61,7 +61,7 @@ export class RecipesService {
       // 创建配方
       const newRecipe = await prisma.recipes.create({
         data: {
-          site_id: createRecipeDto.siteId,
+          siteId: createRecipeDto.siteId,
           name: createRecipeDto.name,
           code: createRecipeDto.code,
           grade_id: createRecipeDto.gradeId,
@@ -80,8 +80,8 @@ export class RecipesService {
       if (createRecipeDto.details && createRecipeDto.details.length > 0) {
         await prisma.recipe_details.createMany({
           data: createRecipeDto.details.map(detail => ({
-            recipe_id: newRecipe.id,
-            material_id: detail.materialId,
+            recipeId: newRecipe.id,
+            materialId: detail.materialId,
             quantity: detail.quantity,
             tolerance: detail.tolerance || 0,
             remarks: detail.remarks,
@@ -118,14 +118,14 @@ export class RecipesService {
    * 查询配方列表
    */
   async findAll(query: QueryRecipeDto) {
-    const { page = 1, limit = 10, sortBy = 'created_at', sortOrder = 'desc', ...filters } = query;
+    const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc', ...filters } = query;
     const skip = (page - 1) * limit;
 
     // 构建查询条件
     const where: any = {};
 
     if (filters.siteId) {
-      where.site_id = filters.siteId;
+      where.siteId = filters.siteId;
     }
 
     if (filters.name) {
@@ -238,7 +238,7 @@ export class RecipesService {
       const existingRecipe = await this.prisma.recipes.findFirst({
         where: {
           name: updateRecipeDto.name,
-          site_id: recipe.site_id,
+          siteId: recipe.siteId,
           id: { not: id },
         },
       });
@@ -273,7 +273,7 @@ export class RecipesService {
         water_cement_ratio: updateRecipeDto.waterCementRatio,
         total_weight: updateRecipeDto.totalWeight,
         remarks: updateRecipeDto.remarks,
-        updated_at: new Date(),
+        updatedAt: new Date(),
       },
       include: {
         site: true,
@@ -309,7 +309,7 @@ export class RecipesService {
     await this.prisma.recipes.update({
       where: { id },
       data: {
-        deleted_at: new Date(),
+        deletedAt: new Date(),
       },
     });
 
@@ -343,7 +343,7 @@ export class RecipesService {
       where: { id },
       data: {
         status: 'published',
-        updated_at: new Date(),
+        updatedAt: new Date(),
       },
       include: {
         site: true,
@@ -375,7 +375,7 @@ export class RecipesService {
       where: { id },
       data: {
         status: 'archived',
-        updated_at: new Date(),
+        updatedAt: new Date(),
       },
       include: {
         site: true,
@@ -410,7 +410,7 @@ export class RecipesService {
     const newRecipe = await this.prisma.$transaction(async (prisma) => {
       const copiedRecipe = await prisma.recipes.create({
         data: {
-          site_id: recipe.site_id,
+          siteId: recipe.siteId,
           name: `${recipe.name} (v${newVersion})`,
           code: recipe.code,
           grade_id: recipe.grade_id,
@@ -429,8 +429,8 @@ export class RecipesService {
       if (recipe.details && recipe.details.length > 0) {
         await prisma.recipe_details.createMany({
           data: recipe.details.map(detail => ({
-            recipe_id: copiedRecipe.id,
-            material_id: detail.material_id,
+            recipeId: copiedRecipe.id,
+            materialId: detail.materialId,
             quantity: detail.quantity,
             tolerance: detail.tolerance,
             remarks: detail.remarks,
@@ -462,7 +462,7 @@ export class RecipesService {
     const where: any = {};
 
     if (siteId) {
-      where.site_id = siteId;
+      where.siteId = siteId;
     }
 
     const [

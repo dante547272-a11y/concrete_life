@@ -3,7 +3,7 @@ import { SitesService } from './sites.service';
 import { CreateSiteDto } from './dto/create-site.dto';
 import { UpdateSiteDto } from './dto/update-site.dto';
 import { QuerySiteDto } from './dto/query-site.dto';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 
 @Controller('sites')
@@ -13,7 +13,7 @@ export class SitesController {
 
   @Post()
   @Roles('admin', 'manager')
-  create(@Body() createSiteDto: CreateSiteDto, @Request() req) {
+  create(@Body() createSiteDto: CreateSiteDto, @Request() req: any) {
     return this.sitesService.create(createSiteDto, req.user.userId);
   }
 
@@ -52,13 +52,13 @@ export class SitesController {
 
   @Patch(':id')
   @Roles('admin', 'manager')
-  update(@Param('id') id: string, @Body() updateSiteDto: UpdateSiteDto, @Request() req) {
+  update(@Param('id') id: string, @Body() updateSiteDto: UpdateSiteDto, @Request() req: any) {
     return this.sitesService.update(+id, updateSiteDto, req.user.userId);
   }
 
   @Patch(':id/status')
   @Roles('admin', 'manager')
-  updateStatus(@Param('id') id: string, @Body('status') status: string, @Request() req) {
+  updateStatus(@Param('id') id: string, @Body('status') status: string, @Request() req: any) {
     return this.sitesService.updateStatus(+id, status, req.user.userId);
   }
 

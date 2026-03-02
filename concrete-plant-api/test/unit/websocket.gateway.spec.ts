@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { EventsGateway } from '../../src/websocket/events.gateway';
 import { WebsocketService } from '../../src/websocket/websocket.service';
 import { JwtService } from '@nestjs/jwt';
+import { PrismaService } from '../../src/prisma/prisma.service';
 
 describe('EventsGateway', () => {
   let gateway: EventsGateway;
@@ -18,6 +19,12 @@ describe('EventsGateway', () => {
 
   const mockJwtService = {
     verify: jest.fn(),
+  };
+
+  const mockPrismaService = {
+    users: {
+      findUnique: jest.fn(),
+    },
   };
 
   const mockSocket = {
@@ -44,6 +51,10 @@ describe('EventsGateway', () => {
         {
           provide: JwtService,
           useValue: mockJwtService,
+        },
+        {
+          provide: PrismaService,
+          useValue: mockPrismaService,
         },
       ],
     }).compile();

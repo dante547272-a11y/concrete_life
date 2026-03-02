@@ -61,18 +61,18 @@ export class TasksService {
     }
 
     // 生成任务编号
-    const taskNo = await this.generateTaskNo(order.site_id);
+    const taskNo = await this.generateTaskNo(order.siteId);
 
     // 创建任务
-    const task = await this.prisma.tasks.create({
+    const task = await this.prisma.task.create({
       data: {
         task_no: taskNo,
-        order_id: orderId,
-        site_id: order.site_id,
+        orderId: orderId,
+        siteId: order.siteId,
         vehicle_id: vehicleId,
         driver_id: driverId,
         delivery_volume: taskData.deliveryVolume,
-        delivery_address: taskData.deliveryAddress || order.construction_site,
+        deliveryAddress: taskData.deliveryAddress || order.construction_site,
         scheduled_time: taskData.scheduledTime ? new Date(taskData.scheduledTime) : null,
         priority: (taskData.priority as any) || 'normal',
         status: 'pending',
@@ -137,14 +137,14 @@ export class TasksService {
    * 查询任务列表
    */
   async findAll(query: QueryTaskDto) {
-    const { page = 1, limit = 10, sortBy = 'created_at', sortOrder = 'desc', ...filters } = query;
+    const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc', ...filters } = query;
     const skip = (page - 1) * limit;
 
     // 构建查询条件
     const where: any = {};
 
     if (filters.siteId) {
-      where.site_id = filters.siteId;
+      where.siteId = filters.siteId;
     }
 
     if (filters.taskNo) {
@@ -152,7 +152,7 @@ export class TasksService {
     }
 
     if (filters.orderId) {
-      where.order_id = filters.orderId;
+      where.orderId = filters.orderId;
     }
 
     if (filters.vehicleId) {
@@ -172,18 +172,18 @@ export class TasksService {
     }
 
     if (filters.startDate || filters.endDate) {
-      where.created_at = {};
+      where.createdAt = {};
       if (filters.startDate) {
-        where.created_at.gte = new Date(filters.startDate);
+        where.createdAt.gte = new Date(filters.startDate);
       }
       if (filters.endDate) {
-        where.created_at.lte = new Date(filters.endDate);
+        where.createdAt.lte = new Date(filters.endDate);
       }
     }
 
     // 查询数据
     const [tasks, total] = await Promise.all([
-      this.prisma.tasks.findMany({
+      this.prisma.task.findMany({
         where,
         skip,
         take: limit,
@@ -216,7 +216,7 @@ export class TasksService {
           [sortBy]: sortOrder,
         },
       }),
-      this.prisma.tasks.count({ where }),
+      this.prisma.task.count({ where }),
     ]);
 
     return {
@@ -232,7 +232,7 @@ export class TasksService {
    * 查询单个任务
    */
   async findOne(id: number) {
-    const task = await this.prisma.tasks.findUnique({
+    const task = await this.prisma.task.findUnique({
       where: { id },
       include: {
         order: {
@@ -278,7 +278,7 @@ export class TasksService {
    * 更新任务
    */
   async update(id: number, updateTaskDto: UpdateTaskDto, userId: number) {
-    const task = await this.prisma.tasks.findUnique({
+    const task = await this.prisma.task.findUnique({
       where: { id },
     });
 
@@ -360,18 +360,18 @@ export class TasksService {
     }
 
     // 更新任务
-    const updatedTask = await this.prisma.tasks.update({
+    const updatedTask = await this.prisma.task.update({
       where: { id },
       data: {
         vehicle_id: vehicleId,
         driver_id: driverId,
         delivery_volume: taskData.deliveryVolume,
-        delivery_address: taskData.deliveryAddress,
+        deliveryAddress: taskData.deliveryAddress,
         scheduled_time: taskData.scheduledTime ? new Date(taskData.scheduledTime) : undefined,
         priority: taskData.priority as any,
         status: taskData.status as any,
         remarks: taskData.remarks,
-        updated_at: new Date(),
+        updatedAt: new Date(),
       },
       include: {
         order: true,
@@ -388,7 +388,7 @@ export class TasksService {
    * 分配任务（分配车辆和司机）
    */
   async assign(id: number, assignTaskDto: AssignTaskDto, userId: number) {
-    const task = await this.prisma.tasks.findUnique({
+    const task = await this.prisma.task.findUnique({
       where: { id },
     });
 
@@ -429,14 +429,14 @@ export class TasksService {
     }
 
     // 更新任务
-    const updatedTask = await this.prisma.tasks.update({
+    const updatedTask = await this.prisma.task.update({
       where: { id },
       data: {
         vehicle_id: vehicleId,
         driver_id: driverId,
         scheduled_time: scheduledTime ? new Date(scheduledTime) : undefined,
         status: 'assigned',
-        updated_at: new Date(),
+        updatedAt: new Date(),
       },
       include: {
         order: true,
@@ -465,7 +465,7 @@ export class TasksService {
    * 更新任务状态
    */
   async updateStatus(id: number, status: string, userId: number) {
-    const task = await this.prisma.tasks.findUnique({
+    const task = await this.prisma.task.findUnique({
       where: { id },
       include: {
         vehicle: true,
@@ -495,7 +495,7 @@ export class TasksService {
     // 更新任务状态
     const updateData: any = {
       status: status as any,
-      updated_at: new Date(),
+      updatedAt: new Date(),
     };
 
     // 记录时间戳
@@ -507,7 +507,7 @@ export class TasksService {
       updateData.completion_time = new Date();
     }
 
-    const updatedTask = await this.prisma.tasks.update({
+    const updatedTask = await this.prisma.task.update({
       where: { id },
       data: updateData,
       include: {
@@ -542,7 +542,7 @@ export class TasksService {
    * 删除任务
    */
   async remove(id: number) {
-    const task = await this.prisma.tasks.findUnique({
+    const task = await this.prisma.task.findUnique({
       where: { id },
     });
 
@@ -570,10 +570,10 @@ export class TasksService {
       });
     }
 
-    await this.prisma.tasks.update({
+    await this.prisma.task.update({
       where: { id },
       data: {
-        deleted_at: new Date(),
+        deletedAt: new Date(),
       },
     });
 
@@ -587,16 +587,16 @@ export class TasksService {
     const where: any = {};
 
     if (siteId) {
-      where.site_id = siteId;
+      where.siteId = siteId;
     }
 
     if (startDate || endDate) {
-      where.created_at = {};
+      where.createdAt = {};
       if (startDate) {
-        where.created_at.gte = new Date(startDate);
+        where.createdAt.gte = new Date(startDate);
       }
       if (endDate) {
-        where.created_at.lte = new Date(endDate);
+        where.createdAt.lte = new Date(endDate);
       }
     }
 
@@ -611,15 +611,15 @@ export class TasksService {
       cancelledTasks,
       totalVolume,
     ] = await Promise.all([
-      this.prisma.tasks.count({ where }),
-      this.prisma.tasks.count({ where: { ...where, status: 'pending' } }),
-      this.prisma.tasks.count({ where: { ...where, status: 'assigned' } }),
-      this.prisma.tasks.count({ where: { ...where, status: 'in_transit' } }),
-      this.prisma.tasks.count({ where: { ...where, status: 'arrived' } }),
-      this.prisma.tasks.count({ where: { ...where, status: 'unloading' } }),
-      this.prisma.tasks.count({ where: { ...where, status: 'completed' } }),
-      this.prisma.tasks.count({ where: { ...where, status: 'cancelled' } }),
-      this.prisma.tasks.aggregate({
+      this.prisma.task.count({ where }),
+      this.prisma.task.count({ where: { ...where, status: 'pending' } }),
+      this.prisma.task.count({ where: { ...where, status: 'assigned' } }),
+      this.prisma.task.count({ where: { ...where, status: 'in_transit' } }),
+      this.prisma.task.count({ where: { ...where, status: 'arrived' } }),
+      this.prisma.task.count({ where: { ...where, status: 'unloading' } }),
+      this.prisma.task.count({ where: { ...where, status: 'completed' } }),
+      this.prisma.task.count({ where: { ...where, status: 'cancelled' } }),
+      this.prisma.task.aggregate({
         where,
         _sum: { delivery_volume: true },
       }),
@@ -647,10 +647,10 @@ export class TasksService {
     const today = new Date();
     const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
     
-    const count = await this.prisma.tasks.count({
+    const count = await this.prisma.task.count({
       where: {
-        site_id: siteId,
-        created_at: {
+        siteId: siteId,
+        createdAt: {
           gte: new Date(today.setHours(0, 0, 0, 0)),
           lt: new Date(today.setHours(23, 59, 59, 999)),
         },

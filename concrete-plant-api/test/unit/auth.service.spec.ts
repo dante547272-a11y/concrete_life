@@ -2,12 +2,13 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from '../../src/auth/auth.service';
 import { UsersService } from '../../src/users/users.service';
 import { JwtService } from '@nestjs/jwt';
+import { PrismaService } from '../../src/prisma/prisma.service';
 import { UnauthorizedException, ConflictException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 
 describe('AuthService', () => {
   let service: AuthService;
-  let usersService: UsersService;
+  let prisma: PrismaService;
   let jwtService: JwtService;
 
   const mockUser = {
@@ -23,9 +24,13 @@ describe('AuthService', () => {
     updated_at: new Date(),
   };
 
-  const mockUsersService = {
-    findByUsername: jest.fn(),
-    create: jest.fn(),
+  const mockPrismaService = {
+    users: {
+      findUnique: jest.fn(),
+      findFirst: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+    },
   };
 
   const mockJwtService = {
@@ -37,8 +42,8 @@ describe('AuthService', () => {
       providers: [
         AuthService,
         {
-          provide: UsersService,
-          useValue: mockUsersService,
+          provide: PrismaService,
+          useValue: mockPrismaService,
         },
         {
           provide: JwtService,
@@ -48,7 +53,7 @@ describe('AuthService', () => {
     }).compile();
 
     service = module.get<AuthService>(AuthService);
-    usersService = module.get<UsersService>(UsersService);
+    prisma = module.get<PrismaService>(PrismaService);
     jwtService = module.get<JwtService>(JwtService);
 
     // 清除所有mock
@@ -61,7 +66,7 @@ describe('AuthService', () => {
 
   describe('validateUser', () => {
     it('should return user without password when credentials are valid', async () => {
-      mockUsersService.findByUsername.mockResolvedValue(mockUser);
+      mockPrismaService.users.findUnique.mockResolvedValue(mockUser);
       jest.spyOn(bcrypt, 'compare').mockImplementation(() => Promise.resolve(true));
 
       const result = await service.validateUser('testuser', 'password123');
@@ -69,11 +74,11 @@ describe('AuthService', () => {
       expect(result).toBeDefined();
       expect(result.password).toBeUndefined();
       expect(result.username).toBe('testuser');
-      expect(mockUsersService.findByUsername).toHaveBeenCalledWith('testuser');
+      expect(mockPrismaService.users.findUnique).toHaveBeenCalled();
     });
 
     it('should return null when user not found', async () => {
-      mockUsersService.findByUsername.mockResolvedValue(null);
+      mockPrismaService.users.findUnique.mockResolvedValue(null);
 
       const result = await service.validateUser('nonexistent', 'password123');
 
@@ -81,7 +86,7 @@ describe('AuthService', () => {
     });
 
     it('should return null when password is incorrect', async () => {
-      mockUsersService.findByUsername.mockResolvedValue(mockUser);
+      mockPrismaService.users.findUnique.mockResolvedValue(mockUser);
       jest.spyOn(bcrypt, 'compare').mockImplementation(() => Promise.resolve(false));
 
       const result = await service.validateUser('testuser', 'wrongpassword');
@@ -91,7 +96,7 @@ describe('AuthService', () => {
 
     it('should return null when user is inactive', async () => {
       const inactiveUser = { ...mockUser, status: 'inactive' };
-      mockUsersService.findByUsername.mockResolvedValue(inactiveUser);
+      mockPrismaService.users.findUnique.mockResolvedValue(inactiveUser);
 
       const result = await service.validateUser('testuser', 'password123');
 
@@ -104,7 +109,7 @@ describe('AuthService', () => {
       const loginDto = { username: 'testuser', password: 'password123' };
       const expectedToken = 'jwt.token.here';
 
-      mockUsersService.findByUsername.mockResolvedValue(mockUser);
+      mockPrismaService.users.findUnique.mockResolvedValue(mockUser);
       jest.spyOn(bcrypt, 'compare').mockImplementation(() => Promise.resolve(true));
       mockJwtService.sign.mockReturnValue(expectedToken);
 
@@ -119,7 +124,7 @@ describe('AuthService', () => {
     it('should throw UnauthorizedException when credentials are invalid', async () => {
       const loginDto = { username: 'testuser', password: 'wrongpassword' };
 
-      mockUsersService.findByUsername.mockResolvedValue(mockUser);
+      mockPrismaService.users.findUnique.mockResolvedValue(mockUser);
       jest.spyOn(bcrypt, 'compare').mockImplementation(() => Promise.resolve(false));
 
       await expect(service.login(loginDto)).rejects.toThrow(UnauthorizedException);
@@ -128,7 +133,7 @@ describe('AuthService', () => {
     it('should throw UnauthorizedException when user not found', async () => {
       const loginDto = { username: 'nonexistent', password: 'password123' };
 
-      mockUsersService.findByUsername.mockResolvedValue(null);
+      mockPrismaService.users.findUnique.mockResolvedValue(null);
 
       await expect(service.login(loginDto)).rejects.toThrow(UnauthorizedException);
     });
@@ -145,14 +150,14 @@ describe('AuthService', () => {
         phone: '13900139000',
       };
 
-      mockUsersService.findByUsername.mockResolvedValue(null);
-      mockUsersService.create.mockResolvedValue({ ...mockUser, ...registerDto });
+      mockPrismaService.users.findUnique.mockResolvedValue(null);
+      mockPrismaService.users.create.mockResolvedValue({ ...mockUser, ...registerDto });
 
       const result = await service.register(registerDto);
 
       expect(result).toBeDefined();
       expect(result.username).toBe(registerDto.username);
-      expect(mockUsersService.create).toHaveBeenCalled();
+      expect(mockPrismaService.users.create).toHaveBeenCalled();
     });
 
     it('should throw ConflictException when username already exists', async () => {
@@ -163,7 +168,7 @@ describe('AuthService', () => {
         role: 'operator',
       };
 
-      mockUsersService.findByUsername.mockResolvedValue(mockUser);
+      mockPrismaService.users.findUnique.mockResolvedValue(mockUser);
 
       await expect(service.register(registerDto)).rejects.toThrow(ConflictException);
     });
@@ -175,7 +180,8 @@ describe('AuthService', () => {
       const oldPassword = 'oldpassword';
       const newPassword = 'newpassword';
 
-      mockUsersService.findByUsername.mockResolvedValue(mockUser);
+      mockPrismaService.users.findUnique.mockResolvedValue(mockUser);
+      mockPrismaService.users.update.mockResolvedValue({ ...mockUser, password: '$2b$10$newhash' });
       jest.spyOn(bcrypt, 'compare').mockImplementation(() => Promise.resolve(true));
       jest.spyOn(bcrypt, 'hash').mockImplementation(() => Promise.resolve('$2b$10$newhash'));
 
@@ -190,7 +196,7 @@ describe('AuthService', () => {
       const oldPassword = 'wrongpassword';
       const newPassword = 'newpassword';
 
-      mockUsersService.findByUsername.mockResolvedValue(mockUser);
+      mockPrismaService.users.findUnique.mockResolvedValue(mockUser);
       jest.spyOn(bcrypt, 'compare').mockImplementation(() => Promise.resolve(false));
 
       await expect(

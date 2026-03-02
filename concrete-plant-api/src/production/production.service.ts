@@ -50,12 +50,12 @@ export class ProductionService {
       // 创建生产批次
       const newBatch = await prisma.production_batches.create({
         data: {
-          site_id: createBatchDto.siteId,
-          order_id: createBatchDto.orderId,
-          recipe_id: createBatchDto.recipeId,
-          batch_number: batchNumber,
-          planned_quantity: createBatchDto.plannedQuantity,
-          actual_quantity: 0,
+          siteId: createBatchDto.siteId,
+          orderId: createBatchDto.orderId,
+          recipeId: createBatchDto.recipeId,
+          batchNumber: batchNumber,
+          plannedQuantity: createBatchDto.plannedQuantity,
+          actualQuantity: 0,
           status: 'pending',
           operator_id: userId,
           remarks: createBatchDto.remarks,
@@ -66,10 +66,10 @@ export class ProductionService {
       if (createBatchDto.records && createBatchDto.records.length > 0) {
         await prisma.batch_records.createMany({
           data: createBatchDto.records.map(record => ({
-            batch_id: newBatch.id,
-            material_id: record.materialId,
-            planned_quantity: record.plannedQuantity,
-            actual_quantity: record.actualQuantity || 0,
+            batchId: newBatch.id,
+            materialId: record.materialId,
+            plannedQuantity: record.plannedQuantity,
+            actualQuantity: record.actualQuantity || 0,
             deviation: record.actualQuantity 
               ? ((record.actualQuantity - record.plannedQuantity) / record.plannedQuantity) * 100 
               : 0,
@@ -81,10 +81,10 @@ export class ProductionService {
         // 根据配方自动创建配料记录
         await prisma.batch_records.createMany({
           data: recipe.details.map(detail => ({
-            batch_id: newBatch.id,
-            material_id: detail.material_id,
-            planned_quantity: detail.quantity,
-            actual_quantity: 0,
+            batchId: newBatch.id,
+            materialId: detail.materialId,
+            plannedQuantity: detail.quantity,
+            actualQuantity: 0,
             deviation: 0,
             operator_id: userId,
           })),
@@ -134,8 +134,8 @@ export class ProductionService {
     // 查询今天的批次数量
     const count = await this.prisma.production_batches.count({
       where: {
-        site_id: siteId,
-        created_at: {
+        siteId: siteId,
+        createdAt: {
           gte: new Date(today.setHours(0, 0, 0, 0)),
           lt: new Date(today.setHours(23, 59, 59, 999)),
         },
@@ -149,22 +149,22 @@ export class ProductionService {
    * 查询生产批次列表
    */
   async findAllBatches(query: QueryBatchDto) {
-    const { page = 1, limit = 10, sortBy = 'created_at', sortOrder = 'desc', ...filters } = query;
+    const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc', ...filters } = query;
     const skip = (page - 1) * limit;
 
     // 构建查询条件
     const where: any = {};
 
     if (filters.siteId) {
-      where.site_id = filters.siteId;
+      where.siteId = filters.siteId;
     }
 
     if (filters.orderId) {
-      where.order_id = filters.orderId;
+      where.orderId = filters.orderId;
     }
 
     if (filters.recipeId) {
-      where.recipe_id = filters.recipeId;
+      where.recipeId = filters.recipeId;
     }
 
     if (filters.status) {
@@ -172,11 +172,11 @@ export class ProductionService {
     }
 
     if (filters.batchNumber) {
-      where.batch_number = { contains: filters.batchNumber };
+      where.batchNumber = { contains: filters.batchNumber };
     }
 
     if (filters.startDate && filters.endDate) {
-      where.created_at = {
+      where.createdAt = {
         gte: new Date(filters.startDate),
         lte: new Date(filters.endDate),
       };
@@ -291,13 +291,13 @@ export class ProductionService {
     const updatedBatch = await this.prisma.production_batches.update({
       where: { id },
       data: {
-        planned_quantity: updateBatchDto.plannedQuantity,
-        actual_quantity: updateBatchDto.actualQuantity,
+        plannedQuantity: updateBatchDto.plannedQuantity,
+        actualQuantity: updateBatchDto.actualQuantity,
         status: updateBatchDto.status as any,
-        start_time: updateBatchDto.startTime ? new Date(updateBatchDto.startTime) : undefined,
-        end_time: updateBatchDto.endTime ? new Date(updateBatchDto.endTime) : undefined,
+        startTime: updateBatchDto.startTime ? new Date(updateBatchDto.startTime) : undefined,
+        endTime: updateBatchDto.endTime ? new Date(updateBatchDto.endTime) : undefined,
         remarks: updateBatchDto.remarks,
-        updated_at: new Date(),
+        updatedAt: new Date(),
       },
       include: {
         site: true,
@@ -334,8 +334,8 @@ export class ProductionService {
       where: { id },
       data: {
         status: 'in_progress',
-        start_time: new Date(),
-        updated_at: new Date(),
+        startTime: new Date(),
+        updatedAt: new Date(),
       },
       include: {
         site: true,
@@ -367,7 +367,7 @@ export class ProductionService {
     }
 
     // 检查是否所有配料记录都已完成
-    const incompleteRecords = batch.records.filter(r => r.actual_quantity === 0);
+    const incompleteRecords = batch.records.filter(r => r.actualQuantity === 0);
     if (incompleteRecords.length > 0) {
       throw new BadRequestException('还有配料记录未完成');
     }
@@ -376,9 +376,9 @@ export class ProductionService {
       where: { id },
       data: {
         status: 'completed',
-        actual_quantity: actualQuantity,
-        end_time: new Date(),
-        updated_at: new Date(),
+        actualQuantity: actualQuantity,
+        endTime: new Date(),
+        updatedAt: new Date(),
       },
       include: {
         site: true,
@@ -413,7 +413,7 @@ export class ProductionService {
     }
 
     // 检查材料是否存在
-    const material = await this.prisma.materials.findUnique({
+    const material = await this.prisma.material.findUnique({
       where: { id: createBatchRecordDto.materialId },
     });
 
@@ -429,10 +429,10 @@ export class ProductionService {
     // 创建配料记录
     const record = await this.prisma.batch_records.create({
       data: {
-        batch_id: createBatchRecordDto.batchId,
-        material_id: createBatchRecordDto.materialId,
-        planned_quantity: createBatchRecordDto.plannedQuantity,
-        actual_quantity: createBatchRecordDto.actualQuantity || 0,
+        batchId: createBatchRecordDto.batchId,
+        materialId: createBatchRecordDto.materialId,
+        plannedQuantity: createBatchRecordDto.plannedQuantity,
+        actualQuantity: createBatchRecordDto.actualQuantity || 0,
         deviation,
         operator_id: userId,
         remarks: createBatchRecordDto.remarks,
@@ -473,14 +473,14 @@ export class ProductionService {
     }
 
     // 计算偏差
-    const deviation = ((actualQuantity - record.planned_quantity) / record.planned_quantity) * 100;
+    const deviation = ((actualQuantity - record.plannedQuantity) / record.plannedQuantity) * 100;
 
     const updatedRecord = await this.prisma.batch_records.update({
       where: { id },
       data: {
-        actual_quantity: actualQuantity,
+        actualQuantity: actualQuantity,
         deviation,
-        updated_at: new Date(),
+        updatedAt: new Date(),
       },
       include: {
         material: true,
@@ -504,11 +504,11 @@ export class ProductionService {
     const where: any = {};
 
     if (siteId) {
-      where.site_id = siteId;
+      where.siteId = siteId;
     }
 
     if (startDate && endDate) {
-      where.created_at = {
+      where.createdAt = {
         gte: new Date(startDate),
         lte: new Date(endDate),
       };
@@ -528,7 +528,7 @@ export class ProductionService {
       this.prisma.production_batches.aggregate({
         where: { ...where, status: 'completed' },
         _sum: {
-          actual_quantity: true,
+          actualQuantity: true,
         },
       }),
     ]);
@@ -538,7 +538,7 @@ export class ProductionService {
       pendingBatches,
       inProgressBatches,
       completedBatches,
-      totalProduction: totalProduction._sum.actual_quantity || 0,
+      totalProduction: totalProduction._sum.actualQuantity || 0,
     };
   }
 }

@@ -9,7 +9,7 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { OrdersModule } from './orders/orders.module';
 import { TasksModule } from './tasks/tasks.module';
-import { VehiclesModule } from './vehicles/vehicles.module';
+// import { VehiclesModule } from './vehicles/vehicles.module';
 import { MaterialsModule } from './materials/materials.module';
 import { SuppliersModule } from './suppliers/suppliers.module';
 import { InventoryModule } from './inventory/inventory.module';
@@ -40,7 +40,7 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
     UsersModule,
     OrdersModule,
     TasksModule,
-    VehiclesModule,
+    // VehiclesModule,
     MaterialsModule,
     SuppliersModule,
     InventoryModule,

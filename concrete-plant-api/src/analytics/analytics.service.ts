@@ -12,11 +12,11 @@ export class AnalyticsService {
     const where: any = {};
     
     if (siteId) {
-      where.site_id = siteId;
+      where.siteId = siteId;
     }
     
     if (startDate && endDate) {
-      where.created_at = {
+      where.createdAt = {
         gte: new Date(startDate),
         lte: new Date(endDate),
       };
@@ -42,26 +42,26 @@ export class AnalyticsService {
       // 总产量
       this.prisma.production_batches.aggregate({
         where: { ...where, status: 'completed' },
-        _sum: { actual_quantity: true },
+        _sum: { actualQuantity: true },
       }),
       
       // 平均批次大小
       this.prisma.production_batches.aggregate({
         where: { ...where, status: 'completed' },
-        _avg: { actual_quantity: true },
+        _avg: { actualQuantity: true },
       }),
       
       // 按天统计
       this.prisma.$queryRaw`
         SELECT 
-          DATE(created_at) as date,
+          DATE(createdAt) as date,
           COUNT(*) as batch_count,
-          SUM(actual_quantity) as production
+          SUM(actualQuantity) as production
         FROM production_batches
         WHERE status = 'completed'
-        ${siteId ? this.prisma.$queryRaw`AND site_id = ${siteId}` : this.prisma.$queryRaw``}
-        ${startDate && endDate ? this.prisma.$queryRaw`AND created_at BETWEEN ${startDate} AND ${endDate}` : this.prisma.$queryRaw``}
-        GROUP BY DATE(created_at)
+        ${siteId ? this.prisma.$queryRaw`AND siteId = ${siteId}` : this.prisma.$queryRaw``}
+        ${startDate && endDate ? this.prisma.$queryRaw`AND createdAt BETWEEN ${startDate} AND ${endDate}` : this.prisma.$queryRaw``}
+        GROUP BY DATE(createdAt)
         ORDER BY date DESC
         LIMIT 30
       `,
@@ -72,13 +72,13 @@ export class AnalyticsService {
           g.name as grade_name,
           g.strength_grade,
           COUNT(pb.id) as batch_count,
-          SUM(pb.actual_quantity) as total_production
+          SUM(pb.actualQuantity) as total_production
         FROM production_batches pb
-        JOIN recipes r ON pb.recipe_id = r.id
+        JOIN recipes r ON pb.recipeId = r.id
         JOIN concrete_grades g ON r.grade_id = g.id
         WHERE pb.status = 'completed'
-        ${siteId ? this.prisma.$queryRaw`AND pb.site_id = ${siteId}` : this.prisma.$queryRaw``}
-        ${startDate && endDate ? this.prisma.$queryRaw`AND pb.created_at BETWEEN ${startDate} AND ${endDate}` : this.prisma.$queryRaw``}
+        ${siteId ? this.prisma.$queryRaw`AND pb.siteId = ${siteId}` : this.prisma.$queryRaw``}
+        ${startDate && endDate ? this.prisma.$queryRaw`AND pb.createdAt BETWEEN ${startDate} AND ${endDate}` : this.prisma.$queryRaw``}
         GROUP BY g.id, g.name, g.strength_grade
         ORDER BY total_production DESC
       `,
@@ -89,12 +89,12 @@ export class AnalyticsService {
           r.name as recipe_name,
           r.version,
           COUNT(pb.id) as batch_count,
-          SUM(pb.actual_quantity) as total_production
+          SUM(pb.actualQuantity) as total_production
         FROM production_batches pb
-        JOIN recipes r ON pb.recipe_id = r.id
+        JOIN recipes r ON pb.recipeId = r.id
         WHERE pb.status = 'completed'
-        ${siteId ? this.prisma.$queryRaw`AND pb.site_id = ${siteId}` : this.prisma.$queryRaw``}
-        ${startDate && endDate ? this.prisma.$queryRaw`AND pb.created_at BETWEEN ${startDate} AND ${endDate}` : this.prisma.$queryRaw``}
+        ${siteId ? this.prisma.$queryRaw`AND pb.siteId = ${siteId}` : this.prisma.$queryRaw``}
+        ${startDate && endDate ? this.prisma.$queryRaw`AND pb.createdAt BETWEEN ${startDate} AND ${endDate}` : this.prisma.$queryRaw``}
         GROUP BY r.id, r.name, r.version
         ORDER BY total_production DESC
         LIMIT 10
@@ -105,8 +105,8 @@ export class AnalyticsService {
       summary: {
         totalBatches,
         completedBatches,
-        totalProduction: totalProduction._sum.actual_quantity || 0,
-        avgBatchSize: avgBatchSize._avg.actual_quantity || 0,
+        totalProduction: totalProduction._sum.actualQuantity || 0,
+        avgBatchSize: avgBatchSize._avg.actualQuantity || 0,
         completionRate: totalBatches > 0 ? ((completedBatches / totalBatches) * 100).toFixed(2) : '0.00',
       },
       trends: {
@@ -126,11 +126,11 @@ export class AnalyticsService {
     const where: any = { status: 'completed' };
     
     if (siteId) {
-      where.site_id = siteId;
+      where.siteId = siteId;
     }
     
     if (startDate && endDate) {
-      where.created_at = {
+      where.createdAt = {
         gte: new Date(startDate),
         lte: new Date(endDate),
       };
@@ -140,10 +140,10 @@ export class AnalyticsService {
     const batches = await this.prisma.production_batches.findMany({
       where,
       select: {
-        start_time: true,
-        end_time: true,
-        planned_quantity: true,
-        actual_quantity: true,
+        startTime: true,
+        endTime: true,
+        plannedQuantity: true,
+        actualQuantity: true,
       },
     });
 
@@ -152,14 +152,14 @@ export class AnalyticsService {
     let totalDeviation = 0;
 
     batches.forEach(batch => {
-      if (batch.start_time && batch.end_time) {
-        const duration = new Date(batch.end_time).getTime() - new Date(batch.start_time).getTime();
+      if (batch.startTime && batch.endTime) {
+        const duration = new Date(batch.endTime).getTime() - new Date(batch.startTime).getTime();
         totalDuration += duration;
         validBatches++;
       }
       
-      if (batch.planned_quantity > 0) {
-        const deviation = Math.abs(batch.actual_quantity - batch.planned_quantity) / batch.planned_quantity;
+      if (batch.plannedQuantity > 0) {
+        const deviation = Math.abs(batch.actualQuantity - batch.plannedQuantity) / batch.plannedQuantity;
         totalDeviation += deviation;
       }
     });
@@ -170,23 +170,23 @@ export class AnalyticsService {
     // 任务效率分析
     const taskWhere: any = { status: 'completed' };
     if (siteId) {
-      taskWhere.site_id = siteId;
+      taskWhere.siteId = siteId;
     }
     if (startDate && endDate) {
-      taskWhere.created_at = {
+      taskWhere.createdAt = {
         gte: new Date(startDate),
         lte: new Date(endDate),
       };
     }
 
     const [totalTasks, avgTaskDuration] = await Promise.all([
-      this.prisma.tasks.count({ where: taskWhere }),
+      this.prisma.task.count({ where: taskWhere }),
       this.prisma.$queryRaw`
-        SELECT AVG(TIMESTAMPDIFF(MINUTE, created_at, updated_at)) as avg_duration
+        SELECT AVG(TIMESTAMPDIFF(MINUTE, createdAt, updatedAt)) as avg_duration
         FROM tasks
         WHERE status = 'completed'
-        ${siteId ? this.prisma.$queryRaw`AND site_id = ${siteId}` : this.prisma.$queryRaw``}
-        ${startDate && endDate ? this.prisma.$queryRaw`AND created_at BETWEEN ${startDate} AND ${endDate}` : this.prisma.$queryRaw``}
+        ${siteId ? this.prisma.$queryRaw`AND siteId = ${siteId}` : this.prisma.$queryRaw``}
+        ${startDate && endDate ? this.prisma.$queryRaw`AND createdAt BETWEEN ${startDate} AND ${endDate}` : this.prisma.$queryRaw``}
       `,
     ]);
 
@@ -198,7 +198,7 @@ export class AnalyticsService {
         SUM(CASE WHEN t.status = 'completed' THEN 1 ELSE 0 END) as completed_tasks
       FROM vehicles v
       LEFT JOIN tasks t ON v.id = t.vehicle_id
-      ${siteId ? this.prisma.$queryRaw`WHERE v.site_id = ${siteId}` : this.prisma.$queryRaw``}
+      ${siteId ? this.prisma.$queryRaw`WHERE v.siteId = ${siteId}` : this.prisma.$queryRaw``}
       GROUP BY v.id, v.plate_number
       ORDER BY task_count DESC
       LIMIT 10
@@ -225,11 +225,11 @@ export class AnalyticsService {
     const where: any = {};
     
     if (siteId) {
-      where.site_id = siteId;
+      where.siteId = siteId;
     }
     
     if (startDate && endDate) {
-      where.created_at = {
+      where.createdAt = {
         gte: new Date(startDate),
         lte: new Date(endDate),
       };
@@ -244,18 +244,18 @@ export class AnalyticsService {
         MIN(br.deviation) as min_deviation,
         COUNT(*) as record_count
       FROM batch_records br
-      JOIN materials m ON br.material_id = m.id
-      JOIN production_batches pb ON br.batch_id = pb.id
+      JOIN materials m ON br.materialId = m.id
+      JOIN production_batches pb ON br.batchId = pb.id
       WHERE pb.status = 'completed'
-      ${siteId ? this.prisma.$queryRaw`AND pb.site_id = ${siteId}` : this.prisma.$queryRaw``}
-      ${startDate && endDate ? this.prisma.$queryRaw`AND pb.created_at BETWEEN ${startDate} AND ${endDate}` : this.prisma.$queryRaw``}
+      ${siteId ? this.prisma.$queryRaw`AND pb.siteId = ${siteId}` : this.prisma.$queryRaw``}
+      ${startDate && endDate ? this.prisma.$queryRaw`AND pb.createdAt BETWEEN ${startDate} AND ${endDate}` : this.prisma.$queryRaw``}
       GROUP BY m.id, m.name
       ORDER BY ABS(avg_deviation) DESC
       LIMIT 10
     `;
 
     // 质量问题告警统计
-    const qualityAlarms = await this.prisma.alarms.count({
+    const qualityAlarms = await this.prisma.alarm.count({
       where: {
         ...where,
         type: 'quality_issue',
@@ -275,11 +275,11 @@ export class AnalyticsService {
     const where: any = {};
     
     if (siteId) {
-      where.site_id = siteId;
+      where.siteId = siteId;
     }
     
     if (startDate && endDate) {
-      where.created_at = {
+      where.createdAt = {
         gte: new Date(startDate),
         lte: new Date(endDate),
       };
@@ -289,15 +289,15 @@ export class AnalyticsService {
       SELECT 
         m.name as material_name,
         m.unit,
-        SUM(br.actual_quantity) as total_consumption,
-        AVG(br.actual_quantity) as avg_consumption,
+        SUM(br.actualQuantity) as total_consumption,
+        AVG(br.actualQuantity) as avg_consumption,
         COUNT(DISTINCT pb.id) as batch_count
       FROM batch_records br
-      JOIN materials m ON br.material_id = m.id
-      JOIN production_batches pb ON br.batch_id = pb.id
+      JOIN materials m ON br.materialId = m.id
+      JOIN production_batches pb ON br.batchId = pb.id
       WHERE pb.status = 'completed'
-      ${siteId ? this.prisma.$queryRaw`AND pb.site_id = ${siteId}` : this.prisma.$queryRaw``}
-      ${startDate && endDate ? this.prisma.$queryRaw`AND pb.created_at BETWEEN ${startDate} AND ${endDate}` : this.prisma.$queryRaw``}
+      ${siteId ? this.prisma.$queryRaw`AND pb.siteId = ${siteId}` : this.prisma.$queryRaw``}
+      ${startDate && endDate ? this.prisma.$queryRaw`AND pb.createdAt BETWEEN ${startDate} AND ${endDate}` : this.prisma.$queryRaw``}
       GROUP BY m.id, m.name, m.unit
       ORDER BY total_consumption DESC
     `;
@@ -306,16 +306,16 @@ export class AnalyticsService {
     const inventoryTurnover = await this.prisma.$queryRaw`
       SELECT 
         m.name as material_name,
-        m.current_stock,
-        m.min_stock,
+        m.currentStock,
+        m.minStock,
         COUNT(it.id) as transaction_count,
         SUM(CASE WHEN it.type = 'in' THEN it.quantity ELSE 0 END) as total_in,
         SUM(CASE WHEN it.type = 'out' THEN it.quantity ELSE 0 END) as total_out
       FROM materials m
-      LEFT JOIN inventory_transactions it ON m.id = it.material_id
-      ${siteId ? this.prisma.$queryRaw`WHERE m.site_id = ${siteId}` : this.prisma.$queryRaw``}
-      ${startDate && endDate ? this.prisma.$queryRaw`AND it.created_at BETWEEN ${startDate} AND ${endDate}` : this.prisma.$queryRaw``}
-      GROUP BY m.id, m.name, m.current_stock, m.min_stock
+      LEFT JOIN inventory_transactions it ON m.id = it.materialId
+      ${siteId ? this.prisma.$queryRaw`WHERE m.siteId = ${siteId}` : this.prisma.$queryRaw``}
+      ${startDate && endDate ? this.prisma.$queryRaw`AND it.createdAt BETWEEN ${startDate} AND ${endDate}` : this.prisma.$queryRaw``}
+      GROUP BY m.id, m.name, m.currentStock, m.minStock
       ORDER BY transaction_count DESC
       LIMIT 20
     `;
@@ -333,11 +333,11 @@ export class AnalyticsService {
     const where: any = {};
     
     if (siteId) {
-      where.site_id = siteId;
+      where.siteId = siteId;
     }
     
     if (startDate && endDate) {
-      where.created_at = {
+      where.createdAt = {
         gte: new Date(startDate),
         lte: new Date(endDate),
       };
@@ -355,11 +355,11 @@ export class AnalyticsService {
       this.prisma.orders.count({ where: { ...where, status: 'completed' } }),
       this.prisma.orders.aggregate({
         where: { ...where, status: 'completed' },
-        _sum: { total_price: true },
+        _sum: { totalPrice: true },
       }),
       this.prisma.orders.aggregate({
         where: { ...where, status: 'completed' },
-        _avg: { total_price: true },
+        _avg: { totalPrice: true },
       }),
       this.prisma.orders.groupBy({
         by: ['status'],
@@ -368,15 +368,15 @@ export class AnalyticsService {
       }),
       this.prisma.$queryRaw`
         SELECT 
-          customer_name,
+          customerName,
           COUNT(*) as order_count,
-          SUM(total_price) as total_revenue,
-          AVG(total_price) as avg_order_value
+          SUM(totalPrice) as total_revenue,
+          AVG(totalPrice) as avg_order_value
         FROM orders
         WHERE status = 'completed'
-        ${siteId ? this.prisma.$queryRaw`AND site_id = ${siteId}` : this.prisma.$queryRaw``}
-        ${startDate && endDate ? this.prisma.$queryRaw`AND created_at BETWEEN ${startDate} AND ${endDate}` : this.prisma.$queryRaw``}
-        GROUP BY customer_name
+        ${siteId ? this.prisma.$queryRaw`AND siteId = ${siteId}` : this.prisma.$queryRaw``}
+        ${startDate && endDate ? this.prisma.$queryRaw`AND createdAt BETWEEN ${startDate} AND ${endDate}` : this.prisma.$queryRaw``}
+        GROUP BY customerName
         ORDER BY total_revenue DESC
         LIMIT 10
       `,
@@ -386,8 +386,8 @@ export class AnalyticsService {
       summary: {
         totalOrders,
         completedOrders,
-        totalRevenue: totalRevenue._sum.total_price || 0,
-        avgOrderValue: avgOrderValue._avg.total_price || 0,
+        totalRevenue: totalRevenue._sum.totalPrice || 0,
+        avgOrderValue: avgOrderValue._avg.totalPrice || 0,
         completionRate: totalOrders > 0 ? ((completedOrders / totalOrders) * 100).toFixed(2) : '0.00',
       },
       distribution: ordersByStatus,

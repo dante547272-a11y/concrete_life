@@ -22,7 +22,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   async validate(payload: JwtPayload) {
     // 验证用户是否存在且状态正常
-    const user = await this.prisma.users.findUnique({
+    const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
       include: {
         role: true,
@@ -38,9 +38,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       userId: user.id,
       username: user.username,
       name: user.name,
-      userType: user.user_type,
-      siteId: user.site_id,
-      roleId: user.role_id,
+      userType: user.userType,
+      siteId: user.siteId,
+      roleId: user.roleId,
       role: user.role,
       site: user.site,
     };
